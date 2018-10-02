@@ -35,11 +35,6 @@ public class Motors {
         frontMotor.setPower(power);
         rearMotor.setPower(power);
     }
-
-    public void setHalfSpeed (double power){
-        frontMotor.setPower((power / 2));
-        rearMotor.setPower((power / 2));
-    }
     public boolean isBusy() {
         return frontMotor.isBusy() && rearMotor.isBusy();
     }
