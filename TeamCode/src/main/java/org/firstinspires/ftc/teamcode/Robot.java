@@ -29,7 +29,7 @@ public class Robot {
 
     //set these accessible from outside since we only read from them
     public HardwareMap hardwareMap;
-    //public ModernRoboticsI2cRangeSensor rangeSensor;
+    //public ModernRoboticsI2cRangeSensor rangeSensor
     public ColorSensor colorSensor;
     public ModernRoboticsI2cGyro gyro;
     //public Motors leftMotors;
