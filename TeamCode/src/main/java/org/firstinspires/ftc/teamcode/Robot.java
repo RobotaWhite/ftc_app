@@ -34,31 +34,13 @@ public class Robot {
     public ModernRoboticsI2cGyro gyro;
     //public Motors leftMotors;
     //public Motors rightMotors;
-    public boolean lastLeftTranslate;
-    public boolean lastRightTranslate;
-    public boolean onsIntake;
-
 
     //set these inaccessible from outside to force using an interface
     private LinearOpMode lop;
     private DcMotor motorRearRight;
     private DcMotor motorRearLeft;
-    private DcMotor intakeLeft;
-    private DcMotor intakeRight;
-    public DcMotor blockDump;
-    private DcMotor motor_winch1;
-    private DcMotor motor_winch2;
-    private DcMotor motorArm;
-
-    private Servo servoColor;
-    private Servo servoBall;
-    private Servo blockLock;
-    private Servo relicServo;
 
     VuforiaLocalizer vuforia;
-
-    private double servoColorPosition;
-    private double relicServoPosition;
 
     int cameraMonitorViewId;
     VuforiaLocalizer.Parameters parameters;
@@ -97,17 +79,6 @@ public class Robot {
     public void init() {
         motorRearRight = hardwareMap.dcMotor.get("right_drive");
         motorRearLeft = hardwareMap.dcMotor.get("left_drive");
-        intakeLeft = hardwareMap.dcMotor.get("intakeLeft");
-        intakeRight = hardwareMap.dcMotor.get("intakeRight");
-        blockDump = hardwareMap.dcMotor.get("blockDump");
-        motor_winch1 = hardwareMap.dcMotor.get("motor_winch1");
-        motor_winch2 = hardwareMap.dcMotor.get("motor_winch2");
-        motorArm = hardwareMap.dcMotor.get("motorArm");
-
-        servoColor = hardwareMap.servo.get("servoColor");
-        servoBall = hardwareMap.servo.get("servoBall");
-        blockLock = hardwareMap.servo.get("blockLock");
-        relicServo = hardwareMap.servo.get("relicServo");
 
         colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
         colorSensor.enableLed(true);
@@ -117,8 +88,6 @@ public class Robot {
 
         cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-
-        //parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = "ARrdAAv/////AAAAmW9uze+2tUpOrVymH8EdMU4uGNoIh0dtDy1ZLrUB53M5NpXJ1PMdsAe+3M3/pNqcg9nOrY6KjImV1kxpfomVVraihhTTR6s60pnBfop1LAPtHuDFWTtUVJoT68oD4/pX/jbPhWDCAsk3dDsphHIUz8K53ATDNHXLg1bsljuKjm7RDxjgA0ivV/dVLzhM9vZ0w5DBcApqrl585MOtlCQcLbIkkMcdxUYdKGDHEFK/38z+tnuDMQ6PbA7YnhOCtoxJtYhn2fNimkvExG9mNnXTASTVge0w3vHQ7miA3yq1s8U6u2rUyby/6MaPZEFlOta31e87/sp4z+rZQndy5y9hrt1EjGn0YVKZbll5Uect3WU7";
 

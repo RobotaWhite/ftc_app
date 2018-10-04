@@ -1,15 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
 //------------------------------------------------------------------------------
-// PushBotManual
+// Teleop program for simple soccer robot for outreach
 //
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-
+@Disabled
 @TeleOp (name="soccerTeleop", group="8749")
 
 public class soccerTeleop extends OpMode {
