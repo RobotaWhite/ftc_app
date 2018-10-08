@@ -39,6 +39,8 @@ public class Robot {
     private LinearOpMode lop;
     private DcMotor motorRearRight;
     private DcMotor motorRearLeft;
+    private DcMotor dumpWinch;
+    private DcMotor
 
     VuforiaLocalizer vuforia;
 
