@@ -21,11 +21,28 @@ boolean toggle = false;
 @Override
 public void loop() {
 
-        // driver 1 tank drive
+//DRIVER ONE
+        //tank drive
         robot.driveTank(gamepad1.left_stick_y, gamepad1.right_stick_y, 8, false);
 
-        //driver 2 tank drive
+        //intake toggle
+        robot.grabber(gamepad1.a);
+
+        //grabber assembly
+        robot.grabberWinch(gamepad1.right_trigger, gamepad1.left_trigger);
+
+        //grabber dump
+        robot.grabberDump(gamepad1.dpad_up, gamepad2.dpad_down, 0.25);
+
+//DRIVER TWO <o/
+        //reverse tank drive
         robot.driveTank(-gamepad2.left_stick_y, -gamepad2.right_stick_y, 8, false);
+
+        //control back slides
+        robot.dumpWinch(gamepad2.right_trigger, gamepad2.left_trigger);
+
+        //dump into the rover
+
 
 
 

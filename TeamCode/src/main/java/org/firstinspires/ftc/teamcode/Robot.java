@@ -37,10 +37,19 @@ public class Robot {
 
     //set these inaccessible from outside to force using an interface
     private LinearOpMode lop;
-    private DcMotor motorRearRight;
-    private DcMotor motorRearLeft;
-    private DcMotor dumpWinch;
-    private DcMotor
+
+    //motors
+    private DcMotor motorRearRight; //right motor
+    private DcMotor motorRearLeft; //left motor
+    private DcMotor dumpWinch; //winch to actuate the back dumper up and down
+    private DcMotor grabberDump; //dumps the balls that are collected in the front
+    private DcMotor grabber; //motor to dump the collected balls into the dumper
+    private DcMotor grabberWinch; //motor to reach out with the grabber
+
+    //servos
+    private Servo dumper; //dumps the balls into the rover
+
+    toggle mineralIntake = new toggle();
 
     VuforiaLocalizer vuforia;
 
@@ -49,9 +58,6 @@ public class Robot {
 
     VuforiaTrackables relicTrackables;
     VuforiaTrackable relicTemplate;
-
-    toggle intakeMotorToggle = new toggle();
-    toggle hoverToggle = new toggle();
 
     static final double COUNTS_PER_MOTOR_REV = 560;    // eg: TETRIX Motor Encoder
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
@@ -252,6 +258,58 @@ public class Robot {
         // write the values to the motors
         motorRearLeft.setPower(conditionStick(leftStick));
         motorRearRight.setPower(conditionStick(rightStick));
+    }
+
+    // actuate the back slides up to reach up to the rover to dump the minerals
+    public void dumpWinch(double up, double down){
+        if (up > 0.1){
+            dumpWinch.setPower(up);
+        } else if (down > 0.1){
+            dumpWinch.setPower(-down);
+        } else {
+            dumpWinch.setPower(0);
+        }
+    }
+
+    //move the grabber up and down to collect minerals or dump them out
+    public void grabberDump(boolean up, boolean down, double speed){
+        if (up){
+            grabberDump.setPower(speed);
+        } else if (down){
+            grabberDump.setPower(-speed);
+        } else {
+
+        }
+    }
+
+    //uses our toggle class to toggle the intake motor on and off with a single button
+    public void grabber(boolean input){
+        if (mineralIntake.value(input)){
+            grabber.setPower(0.5);
+        } else {
+            grabber.setPower(0);
+        }
+
+    }
+
+    //actuate the front grabber assembly in and out to grab minerals without going inside the crater
+    public void grabberWinch (double out, double in){
+        if (out > 0.1){
+            grabberWinch.setPower(out);
+        } else if (in > 0.1){
+            grabberWinch.setPower(-in);
+        } else {
+            grabberWinch.setPower(0);
+        }
+    }
+
+    //dumps the minerals into the rover, and it also resets to the collect position automatically
+    public void roverDump (boolean dump){
+        if (dump){
+            dumper.setPosition(1);
+        } else {
+            dumper.setPosition(0);
+        }
     }
 
     public final void sleep(long milliseconds) {
