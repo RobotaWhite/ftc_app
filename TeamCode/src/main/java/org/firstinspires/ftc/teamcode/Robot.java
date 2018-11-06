@@ -43,13 +43,14 @@ public class Robot {
     private DcMotor motorRearLeft; //left motor
     private DcMotor dumpWinch; //winch to actuate the back dumper up and down
     private DcMotor grabberDump; //dumps the balls that are collected in the front
-    private DcMotor grabber; //motor to dump the collected balls into the dumper
+    private DcMotor grabber; //motor to collect balls
     private DcMotor grabberWinch; //motor to reach out with the grabber
 
     //servos
     private Servo dumper; //dumps the balls into the rover
 
     toggle mineralIntake = new toggle();
+    toggle drivers = new toggle();
 
     VuforiaLocalizer vuforia;
 
@@ -87,10 +88,16 @@ public class Robot {
     public void init() {
         motorRearRight = hardwareMap.dcMotor.get("right_drive");
         motorRearLeft = hardwareMap.dcMotor.get("left_drive");
+        grabber = hardwareMap.dcMotor.get("grabber");
+        grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
+        grabberDump = hardwareMap.dcMotor.get("grabberDump");
+        dumpWinch = hardwareMap.dcMotor.get("dump_winch");
 
-        colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
-        colorSensor.enableLed(true);
-        gyro = (ModernRoboticsI2cGyro) hardwareMap.gyroSensor.get("gyro");
+        dumper = hardwareMap.servo.get("dumper");
+
+        //colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
+        //colorSensor.enableLed(true);
+        //gyro = (ModernRoboticsI2cGyro) hardwareMap.gyroSensor.get("gyro");
 
         motorRearLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -260,8 +267,29 @@ public class Robot {
         motorRearRight.setPower(conditionStick(rightStick));
     }
 
+    //function to control climbing in autonomous
+    public void autoClimb(int pos, double pwr){
+        dumpWinch.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        dumpWinch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        dumpWinch.setTargetPosition(pos);
+
+        dumpWinch.setPower(pwr);
+    }
+
+    public void driverToggle(boolean input, double left1, double right1, double left2, double right2){
+        if (drivers.value(input)){
+            driveTank(left1, right1, 8, false);
+        } else {
+            driveTank(left2, right2, 8, false);
+        }
+    }
+
     // actuate the back slides up to reach up to the rover to dump the minerals
     public void dumpWinch(double up, double down){
+        dumpWinch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         if (up > 0.1){
             dumpWinch.setPower(up);
         } else if (down > 0.1){
@@ -278,7 +306,7 @@ public class Robot {
         } else if (down){
             grabberDump.setPower(-speed);
         } else {
-
+            grabberDump.setPower(0);
         }
     }
 
@@ -308,7 +336,7 @@ public class Robot {
         if (dump){
             dumper.setPosition(1);
         } else {
-            dumper.setPosition(0);
+            dumper.setPosition(-1);
         }
     }
 

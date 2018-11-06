@@ -23,7 +23,7 @@ public void loop() {
 
 //DRIVER ONE
         //tank drive
-        robot.driveTank(gamepad1.left_stick_y, gamepad1.right_stick_y, 8, false);
+        robot.driverToggle(gamepad1.b, -gamepad1.left_stick_y, -gamepad1.right_stick_y, gamepad2.right_stick_y, gamepad2.left_stick_y);
 
         //intake toggle
         robot.grabber(gamepad1.a);
@@ -32,17 +32,14 @@ public void loop() {
         robot.grabberWinch(gamepad1.right_trigger, gamepad1.left_trigger);
 
         //grabber dump
-        robot.grabberDump(gamepad1.dpad_up, gamepad2.dpad_down, 0.25);
+        robot.grabberDump(gamepad1.dpad_up, gamepad1.dpad_down, 1.00);
 
 //DRIVER TWO <o/
-        //reverse tank drive
-        robot.driveTank(-gamepad2.left_stick_y, -gamepad2.right_stick_y, 8, false);
-
         //control back slides
         robot.dumpWinch(gamepad2.right_trigger, gamepad2.left_trigger);
 
         //dump into the rover
-
+        robot.roverDump(gamepad2.a);
 
 
 
