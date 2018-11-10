@@ -29,14 +29,14 @@ public void loop() {
         robot.grabber(gamepad1.a);
 
         //grabber assembly
-        robot.grabberWinch(gamepad1.right_trigger, gamepad1.left_trigger);
+        robot.grabberWinch(gamepad1.right_bumper, gamepad1.left_bumper);
 
         //grabber dump
         robot.grabberDump(gamepad1.dpad_up, gamepad1.dpad_down, 1.00);
 
 //DRIVER TWO <o/
         //control back slides
-        robot.dumpWinch(gamepad2.right_trigger, gamepad2.left_trigger);
+        robot.dumpWinch(gamepad2.right_bumper, gamepad2.left_bumper);
 
         //dump into the rover
         robot.roverDump(gamepad2.a, gamepad2.b);

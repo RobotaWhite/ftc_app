@@ -286,13 +286,12 @@ public class Robot {
     }
 
     // actuate the back slides up to reach up to the rover to dump the minerals
-    public void dumpWinch(double up, double down){
-        dumpWinch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    public void dumpWinch(boolean up, boolean down){
 
-        if (up > 0.1){
-            dumpWinch.setPower(up);
-        } else if (down > 0.1){
-            dumpWinch.setPower(-down);
+        if (up){
+            dumpWinch.setPower(0.5);
+        } else if (down){
+            dumpWinch.setPower(-0.5);
         } else {
             dumpWinch.setPower(0);
         }
@@ -320,11 +319,11 @@ public class Robot {
     }
 
     //actuate the front grabber assembly in and out to grab minerals without going inside the crater
-    public void grabberWinch (double out, double in){
-        if (out > 0.1){
-            grabberWinch.setPower(out);
-        } else if (in > 0.1){
-            grabberWinch.setPower(-in);
+    public void grabberWinch (boolean out, boolean in){
+        if (out){
+            grabberWinch.setPower(0.5);
+        } else if (in){
+            grabberWinch.setPower(-0.5);
         } else {
             grabberWinch.setPower(0);
         }
