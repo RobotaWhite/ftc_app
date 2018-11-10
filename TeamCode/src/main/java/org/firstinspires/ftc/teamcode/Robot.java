@@ -45,9 +45,10 @@ public class Robot {
     private DcMotor grabberDump; //dumps the balls that are collected in the front
     private DcMotor grabber; //motor to collect balls
     private DcMotor grabberWinch; //motor to reach out with the grabber
+    private DcMotor dumper;
 
     //servos
-    private Servo dumper; //dumps the balls into the rover
+    //private Servo dumper; //dumps the balls into the rover
 
     toggle mineralIntake = new toggle();
     toggle drivers = new toggle();
@@ -92,8 +93,7 @@ public class Robot {
         grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
         grabberDump = hardwareMap.dcMotor.get("grabberDump");
         dumpWinch = hardwareMap.dcMotor.get("dump_winch");
-
-        dumper = hardwareMap.servo.get("dumper");
+        dumper = hardwareMap.dcMotor.get("dumper");
 
         //colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
         //colorSensor.enableLed(true);
@@ -268,14 +268,13 @@ public class Robot {
     }
 
     //function to control climbing in autonomous
-    public void autoClimb(int pos, double pwr){
-        dumpWinch.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    public void autoClimbTime(int time, double pwr){
 
-        dumpWinch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        dumpWinch.setPower(-pwr);
 
-        dumpWinch.setTargetPosition(pos);
+        sleep(time);
 
-        dumpWinch.setPower(pwr);
+        dumpWinch.setPower(0);
     }
 
     public void driverToggle(boolean input, double left1, double right1, double left2, double right2){
@@ -313,7 +312,7 @@ public class Robot {
     //uses our toggle class to toggle the intake motor on and off with a single button
     public void grabber(boolean input){
         if (mineralIntake.value(input)){
-            grabber.setPower(0.5);
+            grabber.setPower(0.3);
         } else {
             grabber.setPower(0);
         }
@@ -332,11 +331,13 @@ public class Robot {
     }
 
     //dumps the minerals into the rover, and it also resets to the collect position automatically
-    public void roverDump (boolean dump){
+    public void roverDump (boolean dump, boolean in){
         if (dump){
-            dumper.setPosition(1);
+            dumper.setPower(0.5);
+        } else if (in){
+            dumper.setPower(-0.5);
         } else {
-            dumper.setPosition(-1);
+            dumper.setPower(0);
         }
     }
 

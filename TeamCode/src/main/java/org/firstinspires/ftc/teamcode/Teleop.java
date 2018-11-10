@@ -39,7 +39,7 @@ public void loop() {
         robot.dumpWinch(gamepad2.right_trigger, gamepad2.left_trigger);
 
         //dump into the rover
-        robot.roverDump(gamepad2.a);
+        robot.roverDump(gamepad2.a, gamepad2.b);
 
 
 
