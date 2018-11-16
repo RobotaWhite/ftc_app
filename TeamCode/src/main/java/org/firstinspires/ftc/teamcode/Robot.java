@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,11 +11,29 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+//import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaRoverRuckus;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
+import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
+import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
 public class Robot {
 
@@ -27,11 +46,18 @@ public class Robot {
         hardwareMap = Hwmap;
     }
 
+    //gyro object
+    BNO055IMU gyro;
+
+    //telemetry states
+    Orientation angles;
+    Acceleration gravity;
+
     //set these accessible from outside since we only read from them
     public HardwareMap hardwareMap;
     //public ModernRoboticsI2cRangeSensor rangeSensor
     public ColorSensor colorSensor;
-    public ModernRoboticsI2cGyro gyro;
+    //public ModernRoboticsI2cGyro gyro;
     //public Motors leftMotors;
     //public Motors rightMotors;
 
@@ -47,6 +73,9 @@ public class Robot {
     private DcMotor grabberWinch; //motor to reach out with the grabber
     private DcMotor dumper;
 
+    Orientation lastAngles = new Orientation();
+    double globalAngle;
+
     //servos
     //private Servo dumper; //dumps the balls into the rover
 
@@ -60,6 +89,20 @@ public class Robot {
 
     VuforiaTrackables relicTrackables;
     VuforiaTrackable relicTemplate;
+
+    private static final String VUFORIA_KEY = "ARCDmaP/////AAABmQ9Ht4LTf0TeqcQGvl0tJog2e2hdw/j3GpfNy02HmEXHzxWh1DhoVwMGleDp/d58zO69Wh8yPzsJ5WfBFxkNhvtmtvx5eplK+2vTJAte+tu0UEUqxYjLdolHQdcloT3B9J8+MUZZG2TRg/ylavKuBOklS6zTnDANL2Un0ruXolhnXPWnQGd2cbn7vdTGLyv+7+sJr1a0DN/OIyNCt0ocoTdHYNazl9PHmWXqVbSk6G4dRR83Se+esrQlbQJmHJs56e2fQXSt8+NulozDlc1GUGEsI8La1hTr0i1qeLs2ETruoTwOZBY7yecC14JXuCU+hKlbhheXzjeTtDg0thooF+xZbEfVGqlHGKPC1QI9KQuA";
+            //"ARrdAAv/////AAAAmW9uze+2tUpOrVymH8EdMU4uGNoIh0dtDy1ZLrUB53M5NpXJ1PMdsAe+3M3/pNqcg9nOrY6KjImV1kxpfomVVraihhTTR6s60pnBfop1LAPtHuDFWTtUVJoT68oD4/pX/jbPhWDCAsk3dDsphHIUz8K53ATDNHXLg1bsljuKjm7RDxjgA0ivV/dVLzhM9vZ0w5DBcApqrl585MOtlCQcLbIkkMcdxUYdKGDHEFK/38z+tnuDMQ6PbA7YnhOCtoxJtYhn2fNimkvExG9mNnXTASTVge0w3vHQ7miA3yq1s8U6u2rUyby/6MaPZEFlOta31e87/sp4z+rZQndy5y9hrt1EjGn0YVKZbll5Uect3WU7";
+
+    private static final float mmPerInch        = 25.4f;
+    private static final float mmFTCFieldWidth  = (12*6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
+    private static final float mmTargetHeight   = (6) * mmPerInch;
+
+    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
+
+    private OpenGLMatrix lastLocation = null;
+    private boolean targetVisible = false;
+
+    List<VuforiaTrackable> allTrackables = new ArrayList<>();
 
     static final double COUNTS_PER_MOTOR_REV = 560;    // eg: TETRIX Motor Encoder
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
@@ -99,20 +142,107 @@ public class Robot {
         //colorSensor.enableLed(true);
         //gyro = (ModernRoboticsI2cGyro) hardwareMap.gyroSensor.get("gyro");
 
+        // Set up the parameters with which we will use our IMU. Note that integration
+        // algorithm here just reports accelerations to the logcat log; it doesn't actually
+        // provide positional information.
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        gyro = hardwareMap.get(BNO055IMU.class, "imu");
+        //gyro = (BNO055IMU) hardwareMap.gyroSensor.get("gyro");
+        gyro.initialize(parameters);
+
         motorRearLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
+    }
+
+    public void cameraInit(){
         cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        VuforiaLocalizer.Parameters parametersCamera = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
-        parameters.vuforiaLicenseKey = "ARrdAAv/////AAAAmW9uze+2tUpOrVymH8EdMU4uGNoIh0dtDy1ZLrUB53M5NpXJ1PMdsAe+3M3/pNqcg9nOrY6KjImV1kxpfomVVraihhTTR6s60pnBfop1LAPtHuDFWTtUVJoT68oD4/pX/jbPhWDCAsk3dDsphHIUz8K53ATDNHXLg1bsljuKjm7RDxjgA0ivV/dVLzhM9vZ0w5DBcApqrl585MOtlCQcLbIkkMcdxUYdKGDHEFK/38z+tnuDMQ6PbA7YnhOCtoxJtYhn2fNimkvExG9mNnXTASTVge0w3vHQ7miA3yq1s8U6u2rUyby/6MaPZEFlOta31e87/sp4z+rZQndy5y9hrt1EjGn0YVKZbll5Uect3WU7";
 
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
+        parametersCamera.cameraDirection = CAMERA_CHOICE;
+        parametersCamera.vuforiaLicenseKey = VUFORIA_KEY;
+
+        vuforia = ClassFactory.getInstance().createVuforia(parametersCamera);
+
+        // Load the data sets that for the trackable objects. These particular data
+        // sets are stored in the 'assets' part of our application.
+        VuforiaTrackables targetsRoverRuckus = this.vuforia.loadTrackablesFromAsset("RoverRuckus");
+        VuforiaTrackable blueRover = targetsRoverRuckus.get(0);
+        blueRover.setName("Blue-Rover");
+        VuforiaTrackable redFootprint = targetsRoverRuckus.get(1);
+        redFootprint.setName("Red-Footprint");
+        VuforiaTrackable frontCraters = targetsRoverRuckus.get(2);
+        frontCraters.setName("Front-Craters");
+        VuforiaTrackable backSpace = targetsRoverRuckus.get(3);
+        backSpace.setName("Back-Space");
+
+        // For convenience, gather together all the trackable objects in one easily-iterable collection */
+        //List<VuforiaTrackable> allTrackables = new ArrayList<>();
+        allTrackables.addAll(targetsRoverRuckus);
+
+        //---------------
+        //locations
+        //---------------
+
+        //blue rover
+        OpenGLMatrix blueRoverLocationOnField = OpenGLMatrix
+                .translation(0, mmFTCFieldWidth, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0));
+        blueRover.setLocation(blueRoverLocationOnField);
+
+        //red footprint
+        OpenGLMatrix redFootprintLocationOnField = OpenGLMatrix
+                .translation(0, -mmFTCFieldWidth, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180));
+        redFootprint.setLocation(redFootprintLocationOnField);
+
+        //front crater
+        OpenGLMatrix frontCratersLocationOnField = OpenGLMatrix
+                .translation(-mmFTCFieldWidth, 0, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , 90));
+        frontCraters.setLocation(frontCratersLocationOnField);
+
+        //back space
+        OpenGLMatrix backSpaceLocationOnField = OpenGLMatrix
+                .translation(mmFTCFieldWidth, 0, mmTargetHeight)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90));
+        backSpace.setLocation(backSpaceLocationOnField);
+
+        //phone location
+        final int CAMERA_FORWARD_DISPLACEMENT  = 110;   // eg: Camera is 110 mm in front of robot center
+        final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
+        final int CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
+
+        OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
+                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES,
+                        CAMERA_CHOICE == FRONT ? 90 : -90, 0, 0));
+
+        /**  Let all the trackable listeners know where the phone is.  */
+        for (VuforiaTrackable trackable : allTrackables)
+        {
+            ((VuforiaTrackableDefaultListener)trackable.getListener()).setPhoneInformation(phoneLocationOnRobot, CAMERA_CHOICE);
+        }
+
+
+
+
+        //activate the trackables
+        targetsRoverRuckus.activate();
+
+        /*this.vuforia = ClassFactory.createVuforiaLocalizer(parametersCamera);
 
         relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
         relicTemplate = relicTrackables.get(0);
 
-        relicTrackables.activate();
+        relicTrackables.activate();*/
 
         //group and set up the left motors
         /*leftMotors = new Motors(motorFrontLeft, motorRearLeft);
@@ -151,7 +281,7 @@ public class Robot {
 
 
         output = miniPID.getOutput(actual, rotationRate);
-        actual = -(gyro.getAngularVelocity(AngleUnit.DEGREES).zRotationRate);
+        //actual = -(gyro.getAngularVelocity(AngleUnit.DEGREES).zRotationRate);
 
         leftStick = leftStick - output;
         rightStick = rightStick + output;
@@ -182,12 +312,13 @@ public class Robot {
         motorRearRight.setTargetPosition(inches);
         motorRearLeft.setTargetPosition(inches);
 
-        gyro.resetZAxisIntegrator();
+        //gyro.resetZAxisIntegrator();
+        resetAngle();
 
 
         while (motorRearLeft.isBusy() && motorRearRight.isBusy() && lop.opModeIsActive()) {
             output = miniPID.getOutput(actual, rotationRate);
-            actual = (gyro.getIntegratedZValue());
+            actual = (/*gyro.getIntegratedZValue()*/ getAngle());
 
             double leftPower = power + output; //if robot goes crazy one way reverse the + & minus
             double rightPower = power - output;
@@ -216,13 +347,14 @@ public class Robot {
         motorRearRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorRearLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         if (reset) {
-            gyro.resetZAxisIntegrator();
+            //gyro.resetZAxisIntegrator();
+            resetAngle();
         }
-        while (Math.abs(angle - gyro.getIntegratedZValue()) > 1 && lop.opModeIsActive()) {
+        while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 1 && lop.opModeIsActive()) {
             double limitedAngle = angleRamp.ratelimiter(angle, rate/100);
 
             output = miniPID.getOutput(actual, limitedAngle);
-            actual = (gyro.getIntegratedZValue());
+            actual = (getAngle()/*gyro.getIntegratedZValue()*/);
 
             double leftPower = output; //if robot goes crazy one way reverse the + & minus
             double rightPower = -output;
@@ -238,16 +370,77 @@ public class Robot {
         sleep(500);
     }
 
+    public void resetAngle(){
+
+        lastAngles = gyro.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+        globalAngle = 0;
+
+    }
+
+    public double getAngle(){
+
+        Orientation angles = gyro.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+
+        if (deltaAngle < -180){
+            deltaAngle += 360;
+        } else if (deltaAngle > 180){
+            deltaAngle -= 360;
+        }
+
+        globalAngle += deltaAngle;
+
+        lastAngles = angles;
+
+        return globalAngle;
+    }
+
     //returns the value of the present cypher
     public String getCypher() {
 
-        RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
-        return vuMark.toString();
+        String name = "None";
+
+        cameraInit();
+
+        for (VuforiaTrackable trackable : allTrackables) {
+            if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
+                name = trackable.getName();
+                targetVisible = true;
+
+                // getUpdatedRobotLocation() will return null if no new information is available since
+                // the last time that call was made, or if the trackable is not currently visible.
+                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
+                if (robotLocationTransform != null) {
+                    lastLocation = robotLocationTransform;
+                }
+                break;
+            }
+        }
+
+        return name;
+        //target.toString();
+
+        //RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+        //return vuMark.toString();
     }
 
     //initilizes the servos so that they are in 18 at the start of the match
     public void initServos() {
 
+    }
+
+    //drive time
+    public void driveTime(int time, double pwr){
+
+        motorRearRight.setPower(pwr);
+        motorRearLeft.setPower(pwr);
+
+        sleep(time);
+
+        motorRearRight.setPower(0);
+        motorRearLeft.setPower(0);
     }
 
     //tank drive function

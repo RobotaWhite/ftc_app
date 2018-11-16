@@ -4,11 +4,11 @@ package org.firstinspires.ftc.teamcode;
 // PushBotManual
 //
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp (name="LanderAuto", group="Auto")
+@Autonomous(name="LanderAuto", group="Auto")
 
 public class LanderAuto extends LinearOpMode {
 Robot robot;
@@ -23,10 +23,12 @@ public void runOpMode() {
 
     waitForStart();
 
-    while (opModeIsActive()){
+    //while (opModeIsActive()){
 
-        robot.autoClimbTime(1000, 0.25);
+        //robot.autoClimbTime(1000, 0.25);
 
-        }
+        robot.driveTime(3000, 0.5);
+
+        //}
     }
 }
