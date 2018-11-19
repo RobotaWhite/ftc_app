@@ -7,6 +7,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.internal.vuforia.VuforiaException;
+
 @TeleOp (name="Teleop", group="8749")
 
 public class Teleop extends OpMode {
@@ -19,7 +21,7 @@ boolean toggle = false;
     }
 
 @Override
-public void loop() {
+public void loop() throws VuforiaException {
 
 //DRIVER ONE
         //tank drive
@@ -50,6 +52,7 @@ public void loop() {
         //telemetry displays
         telemetry.addData("Axis", robot.getAngle());
         telemetry.addData("Trackable", robot.getCypher());
+        telemetry.addData("Cypher Axis", robot.cypherDirection());
 
         telemetry.update();
 

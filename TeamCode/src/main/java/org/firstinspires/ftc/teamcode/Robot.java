@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -97,7 +98,7 @@ public class Robot {
     private static final float mmFTCFieldWidth  = (12*6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
     private static final float mmTargetHeight   = (6) * mmPerInch;
 
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
+    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = FRONT;
 
     private OpenGLMatrix lastLocation = null;
     private boolean targetVisible = false;
@@ -130,13 +131,15 @@ public class Robot {
     }
 
     public void init() {
-        motorRearRight = hardwareMap.dcMotor.get("right_drive");
-        motorRearLeft = hardwareMap.dcMotor.get("left_drive");
-        grabber = hardwareMap.dcMotor.get("grabber");
-        grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
-        grabberDump = hardwareMap.dcMotor.get("grabberDump");
-        dumpWinch = hardwareMap.dcMotor.get("dump_winch");
-        dumper = hardwareMap.dcMotor.get("dumper");
+
+            motorRearRight = hardwareMap.dcMotor.get("right_drive");
+            motorRearLeft = hardwareMap.dcMotor.get("left_drive");
+            grabber = hardwareMap.dcMotor.get("grabber");
+            grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
+            grabberDump = hardwareMap.dcMotor.get("grabberDump");
+            dumpWinch = hardwareMap.dcMotor.get("dump_winch");
+            dumper = hardwareMap.dcMotor.get("dumper");
+
 
         //colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
         //colorSensor.enableLed(true);
@@ -162,58 +165,68 @@ public class Robot {
     }
 
     public void cameraInit(){
-        cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parametersCamera = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
 
-        parametersCamera.cameraDirection = CAMERA_CHOICE;
-        parametersCamera.vuforiaLicenseKey = VUFORIA_KEY;
 
-        vuforia = ClassFactory.getInstance().createVuforia(parametersCamera);
+            try {
+                cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+                VuforiaLocalizer.Parameters parametersCamera = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
-        // Load the data sets that for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        VuforiaTrackables targetsRoverRuckus = this.vuforia.loadTrackablesFromAsset("RoverRuckus");
-        VuforiaTrackable blueRover = targetsRoverRuckus.get(0);
-        blueRover.setName("Blue-Rover");
-        VuforiaTrackable redFootprint = targetsRoverRuckus.get(1);
-        redFootprint.setName("Red-Footprint");
-        VuforiaTrackable frontCraters = targetsRoverRuckus.get(2);
-        frontCraters.setName("Front-Craters");
-        VuforiaTrackable backSpace = targetsRoverRuckus.get(3);
-        backSpace.setName("Back-Space");
 
-        // For convenience, gather together all the trackable objects in one easily-iterable collection */
-        //List<VuforiaTrackable> allTrackables = new ArrayList<>();
-        allTrackables.addAll(targetsRoverRuckus);
+                parametersCamera.cameraDirection = CAMERA_CHOICE;
+                parametersCamera.vuforiaLicenseKey = VUFORIA_KEY;
 
-        //---------------
-        //locations
-        //---------------
 
-        //blue rover
-        OpenGLMatrix blueRoverLocationOnField = OpenGLMatrix
-                .translation(0, mmFTCFieldWidth, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0));
-        blueRover.setLocation(blueRoverLocationOnField);
+                vuforia = ClassFactory.getInstance().createVuforia(parametersCamera);
+            }
 
-        //red footprint
-        OpenGLMatrix redFootprintLocationOnField = OpenGLMatrix
-                .translation(0, -mmFTCFieldWidth, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180));
-        redFootprint.setLocation(redFootprintLocationOnField);
+            catch (Exception v){
 
-        //front crater
-        OpenGLMatrix frontCratersLocationOnField = OpenGLMatrix
-                .translation(-mmFTCFieldWidth, 0, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0 , 90));
-        frontCraters.setLocation(frontCratersLocationOnField);
+            }
 
-        //back space
-        OpenGLMatrix backSpaceLocationOnField = OpenGLMatrix
-                .translation(mmFTCFieldWidth, 0, mmTargetHeight)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90));
-        backSpace.setLocation(backSpaceLocationOnField);
+            // Load the data sets that for the trackable objects. These particular data
+            // sets are stored in the 'assets' part of our application.
+            VuforiaTrackables targetsRoverRuckus = this.vuforia.loadTrackablesFromAsset("RoverRuckus");
+            VuforiaTrackable blueRover = targetsRoverRuckus.get(0);
+            blueRover.setName("Blue-Rover");
+            VuforiaTrackable redFootprint = targetsRoverRuckus.get(1);
+            redFootprint.setName("Red-Footprint");
+            VuforiaTrackable frontCraters = targetsRoverRuckus.get(2);
+            frontCraters.setName("Front-Craters");
+            VuforiaTrackable backSpace = targetsRoverRuckus.get(3);
+            backSpace.setName("Back-Space");
+
+            // For convenience, gather together all the trackable objects in one easily-iterable collection */
+            //List<VuforiaTrackable> allTrackables = new ArrayList<>();
+            allTrackables.addAll(targetsRoverRuckus);
+
+            //---------------
+            //locations
+            //---------------
+
+            //blue rover
+            OpenGLMatrix blueRoverLocationOnField = OpenGLMatrix
+                    .translation(0, mmFTCFieldWidth, mmTargetHeight)
+                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0));
+            blueRover.setLocation(blueRoverLocationOnField);
+
+            //red footprint
+            OpenGLMatrix redFootprintLocationOnField = OpenGLMatrix
+                    .translation(0, -mmFTCFieldWidth, mmTargetHeight)
+                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180));
+            redFootprint.setLocation(redFootprintLocationOnField);
+
+            //front crater
+            OpenGLMatrix frontCratersLocationOnField = OpenGLMatrix
+                    .translation(-mmFTCFieldWidth, 0, mmTargetHeight)
+                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 90));
+            frontCraters.setLocation(frontCratersLocationOnField);
+
+            //back space
+            OpenGLMatrix backSpaceLocationOnField = OpenGLMatrix
+                    .translation(mmFTCFieldWidth, 0, mmTargetHeight)
+                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90));
+            backSpace.setLocation(backSpaceLocationOnField);
 
         //phone location
         final int CAMERA_FORWARD_DISPLACEMENT  = 110;   // eg: Camera is 110 mm in front of robot center
@@ -424,6 +437,25 @@ public class Robot {
 
         //RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
         //return vuMark.toString();
+    }
+
+    public double cypherDirection(){
+
+        double Angle = 0;
+
+        if (targetVisible) {
+            // express position (translation) of robot in inches.
+            //VectorF translation = lastLocation.getTranslation();
+            //telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
+                   // translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
+
+            // express the rotation of the robot in degrees.
+            Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
+            Angle = rotation.secondAngle;
+        }
+
+        return Angle;
+
     }
 
     //initilizes the servos so that they are in 18 at the start of the match
