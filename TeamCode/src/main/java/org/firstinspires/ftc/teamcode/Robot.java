@@ -229,7 +229,7 @@ public class Robot {
             backSpace.setLocation(backSpaceLocationOnField);
 
         //phone location
-        final int CAMERA_FORWARD_DISPLACEMENT  = 110;   // eg: Camera is 110 mm in front of robot center
+        final int CAMERA_FORWARD_DISPLACEMENT  = 100;   // eg: Camera is 110 mm in front of robot center
         final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
         final int CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
 
@@ -383,6 +383,45 @@ public class Robot {
         sleep(500);
     }
 
+    //drives using the cypher heading to go to the wall
+    public void driveCypher(double distance) {
+        //tune f then p then I
+        double power = 0.3;
+        double rotationRate = 0;
+        double P = 0.002; // going to be small bring this up until osculation occurs then back that number off
+        double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
+        double D = 0.0;
+        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
+        MiniPID miniPID;
+        miniPID = new MiniPID(P, I, D, F);
+        miniPID.setOutputLimits(0.5);
+        double actual = 0;
+        double output = 0;
+        /*int inches = (int) distance * (int) COUNTS_PER_INCH;
+
+        motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRearRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motorRearLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motorRearRight.setTargetPosition(inches);
+        motorRearLeft.setTargetPosition(inches);*/
+
+        while (motorRearLeft.isBusy() && motorRearRight.isBusy() && lop.opModeIsActive() && distance > cypherDistance()) {
+            output = miniPID.getOutput(actual, rotationRate);
+            actual = (cypherDirection());
+
+            double leftPower = power + output; //if robot goes crazy one way reverse the + & minus
+            double rightPower = power - output;
+
+            motorRearRight.setPower(leftPower);
+            motorRearLeft.setPower(rightPower);
+        }
+        motorRearRight.setPower(0);
+        motorRearLeft.setPower(0);
+        //driveTurn(0, false);
+        sleep(500);
+    }
+
     public void resetAngle(){
 
         lastAngles = gyro.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
@@ -415,8 +454,6 @@ public class Robot {
 
         String name = "None";
 
-        cameraInit();
-
         for (VuforiaTrackable trackable : allTrackables) {
             if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
                 name = trackable.getName();
@@ -444,10 +481,6 @@ public class Robot {
         double Angle = 0;
 
         if (targetVisible) {
-            // express position (translation) of robot in inches.
-            //VectorF translation = lastLocation.getTranslation();
-            //telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                   // translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
 
             // express the rotation of the robot in degrees.
             Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
@@ -456,6 +489,20 @@ public class Robot {
 
         return Angle;
 
+    }
+
+    public double cypherDistance(){
+
+        double distance = 0;
+
+        if (targetVisible) {
+
+            // express position (translation) of robot in inches.
+            VectorF translation = lastLocation.getTranslation();
+
+            distance =  (translation.get(1));
+        }
+        return distance;
     }
 
     //initilizes the servos so that they are in 18 at the start of the match
@@ -504,9 +551,9 @@ public class Robot {
 
     public void driverToggle(boolean input, double left1, double right1, double left2, double right2){
         if (drivers.value(input)){
-            driveTank(left1, right1, 8, false);
-        } else {
             driveTank(left2, right2, 8, false);
+        } else {
+            driveTank(left1, right1, 8, false);
         }
     }
 
@@ -534,9 +581,11 @@ public class Robot {
     }
 
     //uses our toggle class to toggle the intake motor on and off with a single button
-    public void grabber(boolean input){
-        if (mineralIntake.value(input)){
-            grabber.setPower(0.3);
+    public void grabber(boolean in, boolean out){
+        if (in){
+            grabber.setPower(0.5);
+        } else if (out){
+            grabber.setPower(-0.5);
         } else {
             grabber.setPower(0);
         }

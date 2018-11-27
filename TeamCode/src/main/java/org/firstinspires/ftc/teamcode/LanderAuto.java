@@ -20,15 +20,24 @@ public void runOpMode() {
     //set the hardware map
     robot = new Robot(hardwareMap);
     robot.init();
+    //robot.cameraInit();
 
     waitForStart();
 
-    //while (opModeIsActive()){
 
         //robot.autoClimbTime(1000, 0.25);
 
         robot.driveTime(3000, 0.5);
 
-        //}
+
+        //robot.driveDistance(4);
+
+    //robot.driveCypher(3);
+
+    //telemetry.addData("Distance", robot.cypherDistance());
+    //telemetry.addData("Name", robot.getCypher());
+    //telemetry.update();
+
+
     }
 }

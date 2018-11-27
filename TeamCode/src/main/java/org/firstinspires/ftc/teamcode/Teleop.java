@@ -18,6 +18,7 @@ boolean toggle = false;
     public void init(){
         robot = new Robot(hardwareMap);
         robot.init();
+        //robot.cameraInit();
     }
 
 @Override
@@ -28,7 +29,7 @@ public void loop() throws VuforiaException {
         robot.driverToggle(gamepad1.b, gamepad1.right_stick_y, gamepad1.left_stick_y, -gamepad2.left_stick_y, -gamepad2.right_stick_y);
 
         //intake toggle
-        robot.grabber(gamepad1.a);
+        robot.grabber(gamepad1.a, gamepad1.x);
 
         //grabber assembly
         robot.grabberWinch(gamepad1.right_bumper, gamepad1.left_bumper);
@@ -44,17 +45,16 @@ public void loop() throws VuforiaException {
         robot.roverDump(gamepad2.a, gamepad2.b);
 
         if(gamepad1.x){
-            //robot.resetAngle();
-
-            //telemetry.addData("Reset", " Angle");
+            //robot.driveCypher(3);
         }
 
         //telemetry displays
-        telemetry.addData("Axis", robot.getAngle());
+        /*telemetry.addData("Axis", robot.getAngle());
         telemetry.addData("Trackable", robot.getCypher());
         telemetry.addData("Cypher Axis", robot.cypherDirection());
+        telemetry.addData("Distance", robot.cypherDistance());
 
-        telemetry.update();
+        telemetry.update();*/
 
 
         /*telemetry.addData("cypher", robot.getCypher());
