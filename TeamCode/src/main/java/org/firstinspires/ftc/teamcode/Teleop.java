@@ -29,7 +29,7 @@ public void loop() throws VuforiaException {
         robot.driverToggle(gamepad1.b, gamepad1.right_stick_y, gamepad1.left_stick_y, -gamepad2.left_stick_y, -gamepad2.right_stick_y);
 
         //intake toggle
-        robot.grabber(gamepad1.a, gamepad1.x);
+        robot.intake(gamepad1.a, gamepad1.x);
 
         //grabber assembly
         robot.grabberWinch(gamepad1.right_bumper, gamepad1.left_bumper);
@@ -47,6 +47,11 @@ public void loop() throws VuforiaException {
         if(gamepad1.x){
             //robot.driveCypher(3);
         }
+
+        telemetry.addData("Left", robot.left());
+        telemetry.addData("Right", robot.right());
+
+        telemetry.update();
 
         //telemetry displays
         /*telemetry.addData("Axis", robot.getAngle());

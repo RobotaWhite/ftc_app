@@ -25,7 +25,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,6 +73,9 @@ public class Robot {
     private DcMotor grabberWinch; //motor to reach out with the grabber
     private DcMotor dumper;
 
+    private Servo latch;
+    private Servo pin;
+
     Orientation lastAngles = new Orientation();
     double globalAngle;
 
@@ -105,7 +107,7 @@ public class Robot {
 
     List<VuforiaTrackable> allTrackables = new ArrayList<>();
 
-    static final double COUNTS_PER_MOTOR_REV = 560;    // eg: TETRIX Motor Encoder
+    static final double COUNTS_PER_MOTOR_REV = 1120;    // eg: TETRIX Motor Encoder
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
     static final double WHEEL_DIAMETER_INCHES = 2.25;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -140,6 +142,9 @@ public class Robot {
             dumpWinch = hardwareMap.dcMotor.get("dump_winch");
             dumper = hardwareMap.dcMotor.get("dumper");
 
+            latch = hardwareMap.servo.get("latch");
+            pin = hardwareMap.servo.get("pin");
+
 
         //colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
         //colorSensor.enableLed(true);
@@ -160,7 +165,7 @@ public class Robot {
         //gyro = (BNO055IMU) hardwareMap.gyroSensor.get("gyro");
         gyro.initialize(parameters);
 
-        motorRearLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorRearRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
     }
 
@@ -329,7 +334,7 @@ public class Robot {
         resetAngle();
 
 
-        while (motorRearLeft.isBusy() && motorRearRight.isBusy() && lop.opModeIsActive()) {
+        while (motorRearLeft.isBusy() && motorRearRight.isBusy() /*&& lop.opModeIsActive()*/) {
             output = miniPID.getOutput(actual, rotationRate);
             actual = (/*gyro.getIntegratedZValue()*/ getAngle());
 
@@ -344,6 +349,25 @@ public class Robot {
         //driveTurn(0, false);
         sleep(500);
     }
+
+    public double left(){
+        double count;
+
+        count = motorRearLeft.getCurrentPosition();
+
+        return count;
+
+    }
+
+    public double right(){
+        double count;
+
+        count = motorRearRight.getCurrentPosition();
+
+        return count;
+
+    }
+
     //turns the robot to a certain position relative to the position it is in right now
     public void driveTurn(double angle, boolean reset) {
         rateLimiter angleRamp = new rateLimiter();
@@ -363,7 +387,7 @@ public class Robot {
             //gyro.resetZAxisIntegrator();
             resetAngle();
         }
-        while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 1 && lop.opModeIsActive()) {
+        while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 1 /*&& lop.opModeIsActive()*/) {
             double limitedAngle = angleRamp.ratelimiter(angle, rate/100);
 
             output = miniPID.getOutput(actual, limitedAngle);
@@ -580,8 +604,8 @@ public class Robot {
         }
     }
 
-    //uses our toggle class to toggle the intake motor on and off with a single button
-    public void grabber(boolean in, boolean out){
+    //uses bool inputs to turn the motors on and off forward and reverse to intake minerals
+    public void intake(boolean in, boolean out){
         if (in){
             grabber.setPower(0.5);
         } else if (out){

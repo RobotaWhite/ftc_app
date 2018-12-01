@@ -6,11 +6,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="LanderAuto", group="Auto")
+@Autonomous(name="Crater", group="Auto")
 
-public class LanderAuto extends LinearOpMode {
+public class LanderAutoCrater extends LinearOpMode {
 Robot robot;
 boolean toggle = false;
 
