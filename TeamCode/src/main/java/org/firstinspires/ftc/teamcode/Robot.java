@@ -2,12 +2,14 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -55,7 +57,7 @@ public class Robot {
 
     //set these accessible from outside since we only read from them
     public HardwareMap hardwareMap;
-    //public ModernRoboticsI2cRangeSensor rangeSensor
+    public ModernRoboticsI2cRangeSensor rangeSensor;
     public ColorSensor colorSensor;
     //public ModernRoboticsI2cGyro gyro;
     //public Motors leftMotors;
@@ -67,7 +69,8 @@ public class Robot {
     //motors
     private DcMotor motorRearRight; //right motor
     private DcMotor motorRearLeft; //left motor
-    private DcMotor dumpWinch; //winch to actuate the back dumper up and down
+    private DcMotor dumpWinch1; //winch to actuate the back dumper up and down
+    private DcMotor dumpWinch2; //adds strength to the back for climbing
     private DcMotor grabberDump; //dumps the balls that are collected in the front
     private DcMotor grabber; //motor to collect balls
     private DcMotor grabberWinch; //motor to reach out with the grabber
@@ -82,7 +85,7 @@ public class Robot {
     //servos
     //private Servo dumper; //dumps the balls into the rover
 
-    toggle mineralIntake = new toggle();
+    toggle latcher = new toggle();
     toggle drivers = new toggle();
 
     VuforiaLocalizer vuforia;
@@ -139,12 +142,16 @@ public class Robot {
             grabber = hardwareMap.dcMotor.get("grabber");
             grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
             grabberDump = hardwareMap.dcMotor.get("grabberDump");
-            dumpWinch = hardwareMap.dcMotor.get("dump_winch");
+            dumpWinch1 = hardwareMap.dcMotor.get("dump_winch");
+            dumpWinch2 = hardwareMap.dcMotor.get("dump_winch2");
             dumper = hardwareMap.dcMotor.get("dumper");
 
             latch = hardwareMap.servo.get("latch");
             pin = hardwareMap.servo.get("pin");
 
+            rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "range");
+
+            gyro = hardwareMap.get(BNO055IMU.class, "imu");
 
         //colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
         //colorSensor.enableLed(true);
@@ -161,7 +168,7 @@ public class Robot {
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        gyro = hardwareMap.get(BNO055IMU.class, "imu");
+
         //gyro = (BNO055IMU) hardwareMap.gyroSensor.get("gyro");
         gyro.initialize(parameters);
 
@@ -566,11 +573,13 @@ public class Robot {
     //function to control climbing in autonomous
     public void autoClimbTime(int time, double pwr){
 
-        dumpWinch.setPower(-pwr);
+        dumpWinch1.setPower(-pwr);
+        dumpWinch2.setPower(-pwr);
 
         sleep(time);
 
-        dumpWinch.setPower(0);
+        dumpWinch1.setPower(0);
+        dumpWinch2.setPower(0);
     }
 
     public void driverToggle(boolean input, double left1, double right1, double left2, double right2){
@@ -585,11 +594,14 @@ public class Robot {
     public void dumpWinch(boolean up, boolean down){
 
         if (up){
-            dumpWinch.setPower(0.5);
+            dumpWinch1.setPower(1);
+            dumpWinch2.setPower(1);
         } else if (down){
-            dumpWinch.setPower(-0.5);
+            dumpWinch1.setPower(-1);
+            dumpWinch2.setPower(-1);
         } else {
-            dumpWinch.setPower(0);
+            dumpWinch1.setPower(0);
+            dumpWinch2.setPower(0);
         }
     }
 
@@ -607,9 +619,9 @@ public class Robot {
     //uses bool inputs to turn the motors on and off forward and reverse to intake minerals
     public void intake(boolean in, boolean out){
         if (in){
-            grabber.setPower(0.5);
+            grabber.setPower(0.7);
         } else if (out){
-            grabber.setPower(-0.5);
+            grabber.setPower(-0.7);
         } else {
             grabber.setPower(0);
         }
@@ -638,11 +650,37 @@ public class Robot {
         }
     }
 
+    public void roverLatch(boolean input){
+
+        if (latcher.value(input)){
+            latch.setPosition(0.5);
+        } else {
+            latch.setPosition(0);
+        }
+
+    }
+
+    public void servoPin(double pos){
+
+        pin.setPosition(pos);
+
+    }
+
     public final void sleep(long milliseconds) {
         try {
             Thread.sleep(milliseconds);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public double range(){
+
+        double rawRange;
+
+        rawRange = rangeSensor.rawUltrasonic();
+
+
+        return rawRange;
     }
 }

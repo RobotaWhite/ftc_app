@@ -26,7 +26,7 @@ public void loop() throws VuforiaException {
 
 //DRIVER ONE
         //tank drive
-        robot.driverToggle(gamepad1.b, gamepad1.right_stick_y, gamepad1.left_stick_y, -gamepad2.left_stick_y, -gamepad2.right_stick_y);
+        robot.driverToggle(gamepad1.b, -gamepad1.right_stick_y, -gamepad1.left_stick_y, gamepad2.left_stick_y, gamepad2.right_stick_y);
 
         //intake toggle
         robot.intake(gamepad1.a, gamepad1.x);
@@ -41,15 +41,22 @@ public void loop() throws VuforiaException {
         //control back slides
         robot.dumpWinch(gamepad2.right_bumper, gamepad2.left_bumper);
 
+        //control latch
+        robot.roverLatch(gamepad2.x);
+
         //dump into the rover
         robot.roverDump(gamepad2.a, gamepad2.b);
 
-        if(gamepad1.x){
+        if(gamepad1.y){
             //robot.driveCypher(3);
+
+            robot.servoPin(0.5);
+
         }
 
         telemetry.addData("Left", robot.left());
         telemetry.addData("Right", robot.right());
+        telemetry.addData("Range", robot.range());
 
         telemetry.update();
 

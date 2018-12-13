@@ -26,7 +26,7 @@ public void runOpMode() {
 
         //robot.autoClimbTime(1000, 0.25);
 
-        robot.driveTime(3000, 0.5);
+        robot.driveTime(3000, -0.5);
 
 
         //robot.driveDistance(4);
