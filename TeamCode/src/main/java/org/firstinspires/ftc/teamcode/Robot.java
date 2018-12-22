@@ -26,6 +26,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaRoverRuckus;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,13 +84,13 @@ public class Robot {
     Orientation lastAngles = new Orientation();
     double globalAngle;
 
-    //servos
-    //private Servo dumper; //dumps the balls into the rover
-
     toggle latcher = new toggle();
     toggle drivers = new toggle();
 
+
+
     VuforiaLocalizer vuforia;
+    private TFObjectDetector tfod;
 
     int cameraMonitorViewId;
     VuforiaLocalizer.Parameters parameters;
@@ -115,6 +117,10 @@ public class Robot {
     static final double WHEEL_DIAMETER_INCHES = 2.25;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
+
+    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
+    private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
+    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
 
     private double scaleInput(double dVal) {
         //this should provide a similar stick output to the original scaleInput method but cleans up the code significantly
@@ -175,6 +181,36 @@ public class Robot {
         motorRearRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
     }
+
+    /**
+     * Initialize the Vuforia localization engine.
+     */
+    /*private void initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         *
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+    }*/
+
+    /**
+     * Initialize the Tensor Flow Object Detection engine.
+     */
+    private void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+    }
+
 
     public void cameraInit(){
 
@@ -355,6 +391,46 @@ public class Robot {
         motorRearLeft.setPower(0);
         //driveTurn(0, false);
         sleep(500);
+    }
+
+    public void encoderDrive(double distance, double pwr){
+        double rotationRate = 0;
+        double P = 0.0008; // going to be small bring this up until osculation occurs then back that number off
+        double I = 0.0000;//1; // tie string to one side to apply resistance and make sure it corrects itself
+        double D = 0.0;
+        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
+        MiniPID miniPID;
+        miniPID = new MiniPID(P, I, D, F);
+        miniPID.setOutputLimits(0.5);
+        double actual = 0;
+        double output = 0;
+
+        int inches = (int) distance * (int) COUNTS_PER_INCH;
+
+        motorRearRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRearRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motorRearLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motorRearRight.setTargetPosition(inches);
+        motorRearLeft.setTargetPosition(inches);
+
+        while (motorRearRight.isBusy()){
+
+            output = miniPID.getOutput(actual, rotationRate);
+            actual = (motorRearLeft.getCurrentPosition() - motorRearRight.getCurrentPosition());
+
+            double leftPower = pwr; //+ output; //if robot goes crazy one way reverse the + & minus
+            double rightPower = pwr; // - output;
+
+            motorRearRight.setPower(rightPower);
+            motorRearLeft.setPower(leftPower);
+
+        }
+
+        motorRearLeft.setPower(0);
+        motorRearRight.setPower(0);
+
     }
 
     public double left(){
@@ -660,9 +736,19 @@ public class Robot {
 
     }
 
-    public void servoPin(double pos){
+    public void servoPin(boolean on, boolean off){
 
-        pin.setPosition(pos);
+        if (on) {
+            pin.setPosition(0);
+        } else if (off) {
+            pin.setPosition(1);
+        }
+
+        sleep(5000);
+
+        roverLatch(false);
+
+        //servoLock(false, true);
 
     }
 
@@ -683,4 +769,65 @@ public class Robot {
 
         return rawRange;
     }
+
+    public String sample() {
+        String gold = null;
+        boolean goldFound = true;
+
+        cameraInit();
+
+        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+            initTfod();
+        } else {
+            gold = "SKIP";
+        }
+
+            /** Activate Tensor Flow Object Detection. */
+            if (tfod != null) {
+                tfod.activate();
+            }
+
+            while (goldFound) {
+                if (tfod != null) {
+                    // getUpdatedRecognitions() will return null if no new information is available since
+                    // the last time that call was made.
+                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                    if (updatedRecognitions != null) {
+                        if (updatedRecognitions.size() == 3) {
+                            int goldMineralX = -1;
+                            int silverMineral1X = -1;
+                            int silverMineral2X = -1;
+                            for (Recognition recognition : updatedRecognitions) {
+                                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                                    goldMineralX = (int) recognition.getLeft();
+                                } else if (silverMineral1X == -1) {
+                                    silverMineral1X = (int) recognition.getLeft();
+                                } else {
+                                    silverMineral2X = (int) recognition.getLeft();
+                                }
+                            }
+                            if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
+                                if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
+                                    gold = "Left";
+                                    goldFound = false;
+                                } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
+                                    gold = "Right";
+                                    goldFound = false;
+                                } else {
+                                    gold = "Center";
+                                    goldFound = false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        if (tfod != null) {
+            tfod.shutdown();
+        }
+
+        return gold;
+    }
+
 }
