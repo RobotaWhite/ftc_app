@@ -178,7 +178,7 @@ public class Robot {
         //gyro = (BNO055IMU) hardwareMap.gyroSensor.get("gyro");
         gyro.initialize(parameters);
 
-        motorRearRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorRearRight.setDirection(DcMotorSimple.Direction.FORWARD);
 
     }
 
@@ -353,12 +353,12 @@ public class Robot {
     //drives straight for what ever distance needed in inches
     public void driveDistance(double distance) {
         //tune f then p then I
-        double power = 0.3;
+        double power = 0.7;
         double rotationRate = 0;
-        double P = 0.002; // going to be small bring this up until osculation occurs then back that number off
+        double P = 0.0820; // going to be small bring this up until osculation occurs then back that number off
         double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
         double D = 0.0;
-        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
+        double F = 0.0022; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
         MiniPID miniPID;
         miniPID = new MiniPID(P, I, D, F);
         miniPID.setOutputLimits(0.5);
@@ -381,8 +381,62 @@ public class Robot {
             output = miniPID.getOutput(actual, rotationRate);
             actual = (/*gyro.getIntegratedZValue()*/ getAngle());
 
-            double leftPower = power + output; //if robot goes crazy one way reverse the + & minus
-            double rightPower = power - output;
+            double leftPower;
+            double rightPower;
+
+            if (distance > 0) {
+                leftPower = power + output; //if robot goes crazy one way reverse the + & minus
+                rightPower = power - output;
+            } else {
+                leftPower = power - output;
+                rightPower = power + output;
+            }
+
+            motorRearRight.setPower(leftPower);
+            motorRearLeft.setPower(rightPower);
+        }
+        motorRearRight.setPower(0);
+        motorRearLeft.setPower(0);
+        //driveTurn(0, false);
+        sleep(500);
+    }
+
+    //drives straight until the range sensor is so far from the wall
+    public void driveRange(double distance) {
+        //tune f then p then I
+        double power = 0.7;
+        double rotationRate = 0;
+        double P = 0.0820; // going to be small bring this up until osculation occurs then back that number off
+        double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
+        double D = 0.0;
+        double F = 0.0022; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
+        MiniPID miniPID;
+        miniPID = new MiniPID(P, I, D, F);
+        miniPID.setOutputLimits(0.5);
+        double actual = 0;
+        double output = 0;
+
+        motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRearRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorRearLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        resetAngle();
+
+        while (rangeSensor.rawUltrasonic() > distance) {
+            output = miniPID.getOutput(actual, rotationRate);
+            actual = (/*gyro.getIntegratedZValue()*/ getAngle());
+
+            double leftPower;
+            double rightPower;
+
+            if (distance > 0) {
+                leftPower = power + output; //if robot goes crazy one way reverse the + & minus
+                rightPower = power - output;
+            } else {
+                leftPower = power - output;
+                rightPower = power + output;
+            }
 
             motorRearRight.setPower(leftPower);
             motorRearLeft.setPower(rightPower);
@@ -407,7 +461,6 @@ public class Robot {
 
         int inches = (int) distance * (int) COUNTS_PER_INCH;
 
-        motorRearRight.setDirection(DcMotorSimple.Direction.FORWARD);
         motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorRearRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -454,14 +507,15 @@ public class Robot {
     //turns the robot to a certain position relative to the position it is in right now
     public void driveTurn(double angle, boolean reset) {
         rateLimiter angleRamp = new rateLimiter();
+        double pwr = 0.1;
         double rate = 60;
-        double P = 0.002; // going to be small bring this up until osculation occurs then back that number off
-        double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
+        double P = 100; // going to be small bring this up until osculation occurs then back that number off
+        double I = 0.0000;//1; // tie string to one side to apply resistance and make sure it corrects itself
         double D = 0.0;
-        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
+        double F = 0.0;//22; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
         MiniPID miniPID;
         miniPID = new MiniPID(P, I, D, F);
-        miniPID.setOutputLimits(0.5);
+        miniPID.setOutputLimits(0.2);//was 0.5
         double actual = 0;
         double output = 0;
         motorRearRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -470,14 +524,14 @@ public class Robot {
             //gyro.resetZAxisIntegrator();
             resetAngle();
         }
-        while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 1 /*&& lop.opModeIsActive()*/) {
-            double limitedAngle = angleRamp.ratelimiter(angle, rate/100);
+        while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 5 /*&& lop.opModeIsActive()*/) {
+            double limitedAngle = angleRamp.ratelimiter(angle, rate*5);// was divided by 100
 
             output = miniPID.getOutput(actual, limitedAngle);
             actual = (getAngle()/*gyro.getIntegratedZValue()*/);
 
-            double leftPower = output; //if robot goes crazy one way reverse the + & minus
-            double rightPower = -output;
+            double leftPower = pwr + output; //if robot goes crazy one way reverse the + & minus
+            double rightPower = -(pwr + output);
 
             motorRearRight.setPower(leftPower);
             motorRearLeft.setPower(rightPower);
@@ -752,6 +806,25 @@ public class Robot {
 
     }
 
+    public void autoDump(){
+        roverDump(false, true);
+        sleep(1400);
+
+        roverDump(false, false);
+
+    }
+
+    public void autoDrop(){
+
+        pin.setPosition(1);
+
+        sleep(1000);
+
+        roverLatch(false);
+
+        sleep(1000);
+    }
+
     public final void sleep(long milliseconds) {
         try {
             Thread.sleep(milliseconds);
@@ -774,7 +847,7 @@ public class Robot {
         String gold = null;
         boolean goldFound = true;
 
-        cameraInit();
+        //cameraInit();
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
             initTfod();
@@ -823,9 +896,9 @@ public class Robot {
                 }
             }
 
-        if (tfod != null) {
+        /*if (tfod != null) {
             tfod.shutdown();
-        }
+        }*/
 
         return gold;
     }

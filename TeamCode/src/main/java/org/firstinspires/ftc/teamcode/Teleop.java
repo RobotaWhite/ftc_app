@@ -16,7 +16,7 @@ boolean toggle = false;
     public void init(){
         robot = new Robot(hardwareMap);
         robot.init();
-        //robot.cameraInit();
+        robot.cameraInit();
     }
 
 @Override
@@ -56,6 +56,7 @@ public void loop() {
 
         telemetry.addData("Left", robot.left());
         telemetry.addData("Right", robot.right());
+        telemetry.addData("Sample", robot.sample());
         //telemetry.addData("Range", robot.range());
         //telemetry.addData("X", robot.gyro.getPosition().x);
         //telemetry.addData("Y", robot.gyro.getPosition().y);

@@ -25,26 +25,34 @@ public void runOpMode() {
 
     waitForStart();
 
-    //drive forward 4 inches
-    robot.encoderDrive(10, 0.3);
+    robot.autoDrop();
+
+    //robot.driveRange(9);
+    //robot.driveTurn(90, true);
+
+    //drive forward 10 inches
+    robot.driveDistance(15);
 
     //turn to the left 90 degrees
-    //robot.driveTurn(-90, true);
+    robot.driveTurn(90, true);
 
     //drive around minerals
-    //robot.driveDistance(25);
+    robot.driveDistance(30);
 
     //turn to wall
-    //robot.driveTurn(45, true);
+    robot.driveTurn(-40, true);
 
     //drive to wall
+    robot.driveRange(9);
 
     //turn to back
+    robot.driveTurn(90, true);
 
     //back into the parking spot
+    robot.driveDistance(-30);
 
-    //dump out marker
-
+    //dump out marker*/
+    robot.autoDump();
 
         //robot.autoClimbTime(1000, 0.25);
 
@@ -55,6 +63,7 @@ public void runOpMode() {
     //telemetry.addData("Distance", robot.cypherDistance());
     //telemetry.addData("Name", robot.getCypher());
 
+    telemetry.addData("Done", "");
     telemetry.update();
 
 
