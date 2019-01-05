@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -185,20 +186,20 @@ public class Robot {
     /**
      * Initialize the Vuforia localization engine.
      */
-    /*private void initVuforia() {
+    private void initVuforia() {
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         *
+         */
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "");
 
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
         // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
-    }*/
+    }
 
     /**
      * Initialize the Tensor Flow Object Detection engine.
@@ -839,12 +840,11 @@ public class Robot {
 
         rawRange = rangeSensor.rawUltrasonic();
 
-
         return rawRange;
     }
 
-    public String sample() {
-        String gold = null;
+    public char sample() {
+        char gold = ' ';
         boolean goldFound = true;
 
         //cameraInit();
@@ -852,7 +852,8 @@ public class Robot {
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
             initTfod();
         } else {
-            gold = "SKIP";
+            gold = 's';
+
         }
 
             /** Activate Tensor Flow Object Detection. */
@@ -881,13 +882,13 @@ public class Robot {
                             }
                             if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
                                 if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                                    gold = "Left";
+                                    gold = 'l';
                                     goldFound = false;
                                 } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
-                                    gold = "Right";
+                                    gold = 'r';
                                     goldFound = false;
                                 } else {
-                                    gold = "Center";
+                                    gold = 'c';
                                     goldFound = false;
                                 }
                             }
@@ -896,9 +897,9 @@ public class Robot {
                 }
             }
 
-        /*if (tfod != null) {
+        if (tfod != null) {
             tfod.shutdown();
-        }*/
+        }
 
         return gold;
     }
