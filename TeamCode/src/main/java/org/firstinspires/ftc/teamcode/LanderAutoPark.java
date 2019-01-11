@@ -20,8 +20,8 @@ public void runOpMode() {
     robot = new Robot(hardwareMap);
     robot.init();
 
-    //char gold = 'r';
-    char gold = robot.sample(3000);
+    char gold = 'r';
+    //char gold = robot.sample(3000);
 
     waitForStart();
 
@@ -158,6 +158,18 @@ public void runOpMode() {
 
         //hit block
         robot.driveDistance(30);
+
+        //face crater
+        robot.driveTurn(-90, true);
+
+        //back up to depot
+        robot.driveDistance(-30);
+
+        //dump marker
+        robot.autoDump();
+
+        //floor it
+        robot.driveDistance(60);
 
     }
 
