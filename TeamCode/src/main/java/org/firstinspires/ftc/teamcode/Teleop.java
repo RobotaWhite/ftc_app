@@ -16,7 +16,7 @@ boolean toggle = false;
     public void init(){
         robot = new Robot(hardwareMap);
         robot.init();
-        robot.cameraInit();
+        //robot.cameraInit();
     }
 
 @Override
@@ -24,7 +24,7 @@ public void loop() {
 
 //DRIVER ONE
         //tank drive
-        robot.driverToggle(gamepad1.b, -gamepad1.right_stick_y, gamepad1.left_stick_y, -gamepad2.left_stick_y, gamepad2.right_stick_y);
+        robot.driverToggle(gamepad1.b, gamepad1.left_stick_y, gamepad1.right_stick_y, -gamepad2.right_stick_y, -gamepad2.left_stick_y);
 
         //intake toggle
         robot.intake(gamepad1.x, gamepad1.a);
@@ -54,14 +54,14 @@ public void loop() {
 
         }*/
 
-        telemetry.addData("Left", robot.left());
-        telemetry.addData("Right", robot.right());
-        telemetry.addData("Sample", robot.sample());
+        //telemetry.addData("Left", robot.left());
+        //telemetry.addData("Right", robot.right());
+        //telemetry.addData("Sample", robot.sample());
         //telemetry.addData("Range", robot.range());
         //telemetry.addData("X", robot.gyro.getPosition().x);
         //telemetry.addData("Y", robot.gyro.getPosition().y);
         //telemetry.addData("Z", robot.gyro.getPosition().z);
-        telemetry.update();
+        //telemetry.update();
 
     }
 }

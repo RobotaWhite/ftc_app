@@ -88,10 +88,17 @@ public class Robot {
     toggle latcher = new toggle();
     toggle drivers = new toggle();
 
+    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
+    private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
+    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
 
+    private static final String VUFORIA_KEY = "ARCDmaP/////AAABmQ9Ht4LTf0TeqcQGvl0tJog2e2hdw/j3GpfNy02HmEXHzxWh1DhoVwMGleDp/d58zO69Wh8yPzsJ5WfBFxkNhvtmtvx5eplK+2vTJAte+tu0UEUqxYjLdolHQdcloT3B9J8+MUZZG2TRg/ylavKuBOklS6zTnDANL2Un0ruXolhnXPWnQGd2cbn7vdTGLyv+7+sJr1a0DN/OIyNCt0ocoTdHYNazl9PHmWXqVbSk6G4dRR83Se+esrQlbQJmHJs56e2fQXSt8+NulozDlc1GUGEsI8La1hTr0i1qeLs2ETruoTwOZBY7yecC14JXuCU+hKlbhheXzjeTtDg0thooF+xZbEfVGqlHGKPC1QI9KQuA";
 
-    VuforiaLocalizer vuforia;
+    private VuforiaLocalizer vuforia;
+
     private TFObjectDetector tfod;
+
+    char Pos = 's';
 
     int cameraMonitorViewId;
     VuforiaLocalizer.Parameters parameters;
@@ -99,8 +106,7 @@ public class Robot {
     VuforiaTrackables relicTrackables;
     VuforiaTrackable relicTemplate;
 
-    private static final String VUFORIA_KEY = "ARCDmaP/////AAABmQ9Ht4LTf0TeqcQGvl0tJog2e2hdw/j3GpfNy02HmEXHzxWh1DhoVwMGleDp/d58zO69Wh8yPzsJ5WfBFxkNhvtmtvx5eplK+2vTJAte+tu0UEUqxYjLdolHQdcloT3B9J8+MUZZG2TRg/ylavKuBOklS6zTnDANL2Un0ruXolhnXPWnQGd2cbn7vdTGLyv+7+sJr1a0DN/OIyNCt0ocoTdHYNazl9PHmWXqVbSk6G4dRR83Se+esrQlbQJmHJs56e2fQXSt8+NulozDlc1GUGEsI8La1hTr0i1qeLs2ETruoTwOZBY7yecC14JXuCU+hKlbhheXzjeTtDg0thooF+xZbEfVGqlHGKPC1QI9KQuA";
-            //"ARrdAAv/////AAAAmW9uze+2tUpOrVymH8EdMU4uGNoIh0dtDy1ZLrUB53M5NpXJ1PMdsAe+3M3/pNqcg9nOrY6KjImV1kxpfomVVraihhTTR6s60pnBfop1LAPtHuDFWTtUVJoT68oD4/pX/jbPhWDCAsk3dDsphHIUz8K53ATDNHXLg1bsljuKjm7RDxjgA0ivV/dVLzhM9vZ0w5DBcApqrl585MOtlCQcLbIkkMcdxUYdKGDHEFK/38z+tnuDMQ6PbA7YnhOCtoxJtYhn2fNimkvExG9mNnXTASTVge0w3vHQ7miA3yq1s8U6u2rUyby/6MaPZEFlOta31e87/sp4z+rZQndy5y9hrt1EjGn0YVKZbll5Uect3WU7";
+    //"ARrdAAv/////AAAAmW9uze+2tUpOrVymH8EdMU4uGNoIh0dtDy1ZLrUB53M5NpXJ1PMdsAe+3M3/pNqcg9nOrY6KjImV1kxpfomVVraihhTTR6s60pnBfop1LAPtHuDFWTtUVJoT68oD4/pX/jbPhWDCAsk3dDsphHIUz8K53ATDNHXLg1bsljuKjm7RDxjgA0ivV/dVLzhM9vZ0w5DBcApqrl585MOtlCQcLbIkkMcdxUYdKGDHEFK/38z+tnuDMQ6PbA7YnhOCtoxJtYhn2fNimkvExG9mNnXTASTVge0w3vHQ7miA3yq1s8U6u2rUyby/6MaPZEFlOta31e87/sp4z+rZQndy5y9hrt1EjGn0YVKZbll5Uect3WU7";
 
     private static final float mmPerInch        = 25.4f;
     private static final float mmFTCFieldWidth  = (12*6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
@@ -118,10 +124,6 @@ public class Robot {
     static final double WHEEL_DIAMETER_INCHES = 2.25;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
-
-    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
-    private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
-    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
 
     private double scaleInput(double dVal) {
         //this should provide a similar stick output to the original scaleInput method but cleans up the code significantly
@@ -183,34 +185,45 @@ public class Robot {
 
     }
 
-    /**
+    /*/**
      * Initialize the Vuforia localization engine.
-     */
+     *
     private void initVuforia() {
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+         *
+        try {
+            VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraName = hardwareMap.get(WebcamName.class, "");
+            parameters.vuforiaLicenseKey = VUFORIA_KEY;
+            parameters.cameraName = hardwareMap.get(WebcamName.class, "camera");
 
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+            //  Instantiate the Vuforia engine
+            vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
-        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+            // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+        }
+
+        catch (Exception g){
+
+        }
     }
 
     /**
      * Initialize the Tensor Flow Object Detection engine.
-     */
+     *
     private void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
-    }
+        try {
+            int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                    "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+            TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+            tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+            tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+        }
+        catch (Exception t){
+
+        }
+    }*/
 
 
     public void cameraInit(){
@@ -378,7 +391,7 @@ public class Robot {
         resetAngle();
 
 
-        while (motorRearLeft.isBusy() && motorRearRight.isBusy() /*&& lop.opModeIsActive()*/) {
+        while (motorRearRight.isBusy() /*&& lop.opModeIsActive()*/) {
             output = miniPID.getOutput(actual, rotationRate);
             actual = (/*gyro.getIntegratedZValue()*/ getAngle());
 
@@ -444,7 +457,7 @@ public class Robot {
         }
         motorRearRight.setPower(0);
         motorRearLeft.setPower(0);
-        //driveTurn(0, false);
+        driveTurn(0, false);
         sleep(500);
     }
 
@@ -736,6 +749,57 @@ public class Robot {
         }
     }
 
+    /*public void dumpWinch(boolean up, boolean down, double pwr) {
+
+        int pos = dumpWinch1.getCurrentPosition();
+        double motorPower;
+
+        double rotationRate = 0;
+        double P = 0.0008; // going to be small bring this up until osculation occurs then back that number off
+        double I = 0.0000;//1; // tie string to one side to apply resistance and make sure it corrects itself
+        double D = 0.0;
+        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
+        MiniPID miniPID;
+        miniPID = new MiniPID(P, I, D, F);
+        miniPID.setOutputLimits(0.5);
+        double actual = 0;
+        double output = 0;
+
+        dumpWinch1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        dumpWinch2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        dumpWinch1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        dumpWinch2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        if (up) {
+            pos += 20;
+        } else if (down) {
+            pos -= 20;
+        }
+
+        dumpWinch1.setTargetPosition(pos);
+        dumpWinch2.setTargetPosition(pos);
+
+        while (motorRearRight.isBusy()){
+
+            output = miniPID.getOutput(actual, rotationRate);
+            actual = (motorRearLeft.getCurrentPosition() - pos);
+
+            if (dumpWinch1.getCurrentPosition() > pos) {
+                motorPower = pwr - output;
+            } else if (dumpWinch1.getCurrentPosition() < pos + 10) {
+                motorPower = pwr + output;
+            } else {
+                motorPower = 1;
+            }
+
+            dumpWinch1.setPower(motorPower);
+            dumpWinch2.setPower(motorPower);
+
+        }
+
+    }*/
+
     //move the grabber up and down to collect minerals or dump them out
     public void grabberDump(boolean up, boolean down, double speed){
         if (up){
@@ -770,12 +834,12 @@ public class Robot {
         }
     }
 
-    //dumps the minerals into the rover, and it also resets to the collect position automatically
+    //dumps the minerals into the rover
     public void roverDump (boolean dump, boolean in){
-        if (dump){
+        if (in){
             dumper.setPower(0.5);
-        } else if (in){
-            dumper.setPower(-0.5);
+        } else if (dump){
+            dumper.setPower(-0.6);
         } else {
             dumper.setPower(0);
         }
@@ -808,22 +872,29 @@ public class Robot {
     }
 
     public void autoDump(){
-        roverDump(false, true);
+        roverDump(true, false);
+        grabberDump(false, true, 0.5);
+
         sleep(1400);
 
         roverDump(false, false);
+        grabberDump(true, false, 0.8);
+
+        sleep(800);
+        grabberDump(false, false, 0.0);
 
     }
 
     public void autoDrop(){
 
+        //roverLatch(true);
         pin.setPosition(1);
 
-        sleep(1000);
+        sleep(1800);
 
         roverLatch(false);
 
-        sleep(1000);
+        sleep(800);
     }
 
     public final void sleep(long milliseconds) {
@@ -843,11 +914,11 @@ public class Robot {
         return rawRange;
     }
 
-    public char sample() {
+    /*public char sample() {
         char gold = ' ';
         boolean goldFound = true;
 
-        //cameraInit();
+        initVuforia();
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
             initTfod();
@@ -856,7 +927,7 @@ public class Robot {
 
         }
 
-            /** Activate Tensor Flow Object Detection. */
+            //Activate Tensor Flow Object Detection.
             if (tfod != null) {
                 tfod.activate();
             }
@@ -902,6 +973,128 @@ public class Robot {
         }
 
         return gold;
+    }//*/
+
+    private void initVuforia() {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "camera");
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
+    }
+
+    /**
+     * Initialize the Tensor Flow Object Detection engine.
+     */
+    private void initTfod() {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+    }
+
+    public char sample (int timeout) {
+
+        initVuforia();
+
+        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+            initTfod();
+        } else {
+            //uh on
+        }
+
+        if (true) {
+            /** Activate Tensor Flow Object Detection. */
+            if (tfod != null) {
+                tfod.activate();
+            }
+
+            long startTime = System.currentTimeMillis();
+            long currentTime = startTime;
+            while (currentTime - startTime < timeout) {
+                //telemetry.addData("time", currentTime - startTime);
+                //telemetry.update();
+                if (tfod != null) {
+                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+
+                    if (updatedRecognitions != null) {
+                        //telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        //telemetry.update();
+                        if (updatedRecognitions.size() == 2) {
+                            int goldMineralX = -1;
+                            int silverMineral1X = -1;
+                            int silverMineral2X = -1;
+
+                            // This just records values, and is unchanged
+
+                            for (Recognition recognition : updatedRecognitions) {
+                                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                                    goldMineralX = (int) recognition.getTop();
+                                } else if (silverMineral1X == -1) {
+                                    silverMineral1X = (int) recognition.getTop();
+                                } else {
+                                    silverMineral2X = (int) recognition.getTop();
+                                }
+                            }
+
+                            // If there is no gold (-1) and there two silvers (not -1) the gold
+                            // is not visible, and must be on the right
+
+                            if (goldMineralX == -1 && silverMineral1X != -1 && silverMineral2X != -1) {
+                                //telemetry.addData("Gold Mineral Position", "Right");
+                                Pos = 'r';
+                                //telemetry.addData("Position", Position);
+                                //telemetry.update();
+                            }
+
+                            // If you can see one gold and one silver ...
+
+                            else if (goldMineralX != -1 && silverMineral1X != -1) {
+                                // ... if the gold is to the right of the silver, the gold is in the center ...
+
+
+                                if (goldMineralX > silverMineral1X) {
+                                    //telemetry.addData("Gold Mineral Position", "Center");
+                                    Pos = 'c';
+                                    //telemetry.addData("Position", Position);
+                                    //telemetry.update();
+                                }
+
+                                // ... otherwise it is on the left
+
+                                else {
+                                    //telemetry.addData("Gold Mineral Position", "Left");
+                                    Pos = 'l';
+                                    //telemetry.addData("Position", Position);
+                                    //telemetry.update();
+                                }
+                            }
+
+                            // ... otherwise it is on the left
+
+                        }
+                    }
+                }
+                //telemetry.update();
+
+                currentTime = System.currentTimeMillis();
+            }//*/
+
+            //telemetry.addData("Pos", Position);
+            //telemetry.update();
+
+            //sleep(5000);
+
+        }
+        return Pos;
     }
 
 }
