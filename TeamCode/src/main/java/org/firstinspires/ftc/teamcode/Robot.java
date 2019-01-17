@@ -100,6 +100,8 @@ public class Robot {
 
     char Pos = 's';
 
+    int winchPos = 0;
+
     int cameraMonitorViewId;
     VuforiaLocalizer.Parameters parameters;
 
@@ -182,6 +184,11 @@ public class Robot {
         gyro.initialize(parameters);
 
         motorRearRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        /*umpWinch1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        dumpWinch2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        dumpWinch1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        dumpWinch2.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
 
     }
 
@@ -391,7 +398,7 @@ public class Robot {
         resetAngle();
 
 
-        while (motorRearRight.isBusy() /*&& lop.opModeIsActive()*/) {
+        while (motorRearRight.isBusy() && lop.opModeIsActive()) {
             output = miniPID.getOutput(actual, rotationRate);
             actual = (/*gyro.getIntegratedZValue()*/ getAngle());
 
@@ -411,6 +418,11 @@ public class Robot {
         }
         motorRearRight.setPower(0);
         motorRearLeft.setPower(0);
+
+        //stop and reset so that the robot doesn't do anything crazy
+        motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         //driveTurn(0, false);
         sleep(500);
     }
@@ -418,7 +430,7 @@ public class Robot {
     //drives straight until the range sensor is so far from the wall
     public void driveRange(double distance) {
         //tune f then p then I
-        double power = 0.7;
+        double power = 0.9;
         double rotationRate = 0;
         double P = 0.0820; // going to be small bring this up until osculation occurs then back that number off
         double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
@@ -437,7 +449,7 @@ public class Robot {
 
         resetAngle();
 
-        while (rangeSensor.rawUltrasonic() > distance) {
+        while (rangeSensor.rawUltrasonic() > distance && lop.opModeIsActive()) {
             output = miniPID.getOutput(actual, rotationRate);
             actual = (/*gyro.getIntegratedZValue()*/ getAngle());
 
@@ -457,47 +469,13 @@ public class Robot {
         }
         motorRearRight.setPower(0);
         motorRearLeft.setPower(0);
-        driveTurn(0, false);
-        sleep(500);
-    }
 
-    public void encoderDrive(double distance, double pwr){
-        double rotationRate = 0;
-        double P = 0.0008; // going to be small bring this up until osculation occurs then back that number off
-        double I = 0.0000;//1; // tie string to one side to apply resistance and make sure it corrects itself
-        double D = 0.0;
-        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
-        MiniPID miniPID;
-        miniPID = new MiniPID(P, I, D, F);
-        miniPID.setOutputLimits(0.5);
-        double actual = 0;
-        double output = 0;
-
-        int inches = (int) distance * (int) COUNTS_PER_INCH;
-
+        //stop and reset so that the robot doesn't do anything crazy
         motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorRearRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorRearLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorRearRight.setTargetPosition(inches);
-        motorRearLeft.setTargetPosition(inches);
 
-        while (motorRearRight.isBusy()){
-
-            output = miniPID.getOutput(actual, rotationRate);
-            actual = (motorRearLeft.getCurrentPosition() - motorRearRight.getCurrentPosition());
-
-            double leftPower = pwr; //+ output; //if robot goes crazy one way reverse the + & minus
-            double rightPower = pwr; // - output;
-
-            motorRearRight.setPower(rightPower);
-            motorRearLeft.setPower(leftPower);
-
-        }
-
-        motorRearLeft.setPower(0);
-        motorRearRight.setPower(0);
-
+        //driveTurn(0, false);
+        sleep(500);
     }
 
     public double left(){
@@ -521,7 +499,7 @@ public class Robot {
     //turns the robot to a certain position relative to the position it is in right now
     public void driveTurn(double angle, boolean reset) {
         rateLimiter angleRamp = new rateLimiter();
-        double pwr = 0.1;
+        //double pwr = 0.1;
         double rate = 60;
         double P = 100; // going to be small bring this up until osculation occurs then back that number off
         double I = 0.0000;//1; // tie string to one side to apply resistance and make sure it corrects itself
@@ -538,14 +516,14 @@ public class Robot {
             //gyro.resetZAxisIntegrator();
             resetAngle();
         }
-        while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 5 /*&& lop.opModeIsActive()*/) {
+        while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 5 && lop.opModeIsActive()) {
             double limitedAngle = angleRamp.ratelimiter(angle, rate*5);// was divided by 100
 
             output = miniPID.getOutput(actual, limitedAngle);
             actual = (getAngle()/*gyro.getIntegratedZValue()*/);
 
-            double leftPower = pwr + output; //if robot goes crazy one way reverse the + & minus
-            double rightPower = -(pwr + output);
+            double leftPower =  output; //if robot goes crazy one way reverse the + & minus
+            double rightPower = -output;
 
             motorRearRight.setPower(leftPower);
             motorRearLeft.setPower(rightPower);
@@ -555,45 +533,6 @@ public class Robot {
         motorRearLeft.setPower(0);
         motorRearRight.setPower(0);
 
-        sleep(500);
-    }
-
-    //drives using the cypher heading to go to the wall
-    public void driveCypher(double distance) {
-        //tune f then p then I
-        double power = 0.3;
-        double rotationRate = 0;
-        double P = 0.002; // going to be small bring this up until osculation occurs then back that number off
-        double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
-        double D = 0.0;
-        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
-        MiniPID miniPID;
-        miniPID = new MiniPID(P, I, D, F);
-        miniPID.setOutputLimits(0.5);
-        double actual = 0;
-        double output = 0;
-        /*int inches = (int) distance * (int) COUNTS_PER_INCH;
-
-        motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorRearRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorRearLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motorRearRight.setTargetPosition(inches);
-        motorRearLeft.setTargetPosition(inches);*/
-
-        while (motorRearLeft.isBusy() && motorRearRight.isBusy() && lop.opModeIsActive() && distance > cypherDistance()) {
-            output = miniPID.getOutput(actual, rotationRate);
-            actual = (cypherDirection());
-
-            double leftPower = power + output; //if robot goes crazy one way reverse the + & minus
-            double rightPower = power - output;
-
-            motorRearRight.setPower(leftPower);
-            motorRearLeft.setPower(rightPower);
-        }
-        motorRearRight.setPower(0);
-        motorRearLeft.setPower(0);
-        //driveTurn(0, false);
         sleep(500);
     }
 
@@ -651,35 +590,6 @@ public class Robot {
         //return vuMark.toString();
     }
 
-    public double cypherDirection(){
-
-        double Angle = 0;
-
-        if (targetVisible) {
-
-            // express the rotation of the robot in degrees.
-            Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-            Angle = rotation.secondAngle;
-        }
-
-        return Angle;
-
-    }
-
-    public double cypherDistance(){
-
-        double distance = 0;
-
-        if (targetVisible) {
-
-            // express position (translation) of robot in inches.
-            VectorF translation = lastLocation.getTranslation();
-
-            distance =  (translation.get(1));
-        }
-        return distance;
-    }
-
     //initilizes the servos so that they are in 18 at the start of the match
     public void initServos() {
 
@@ -714,18 +624,6 @@ public class Robot {
         motorRearRight.setPower(conditionStick(rightStick));
     }
 
-    //function to control climbing in autonomous
-    public void autoClimbTime(int time, double pwr){
-
-        dumpWinch1.setPower(-pwr);
-        dumpWinch2.setPower(-pwr);
-
-        sleep(time);
-
-        dumpWinch1.setPower(0);
-        dumpWinch2.setPower(0);
-    }
-
     public void driverToggle(boolean input, double left1, double right1, double left2, double right2){
         if (drivers.value(input)){
             driveTank(left2, right2, 8, false);
@@ -740,65 +638,41 @@ public class Robot {
         if (up){
             dumpWinch1.setPower(1);
             dumpWinch2.setPower(1);
+
+            servoPin(true, false);
         } else if (down){
             dumpWinch1.setPower(-1);
             dumpWinch2.setPower(-1);
+
+            servoPin(true, false);
         } else {
             dumpWinch1.setPower(0);
             dumpWinch2.setPower(0);
+
+            servoPin(false, true);
         }
-    }
 
-    /*public void dumpWinch(boolean up, boolean down, double pwr) {
 
-        int pos = dumpWinch1.getCurrentPosition();
-        double motorPower;
+    }//*/
 
-        double rotationRate = 0;
-        double P = 0.0008; // going to be small bring this up until osculation occurs then back that number off
-        double I = 0.0000;//1; // tie string to one side to apply resistance and make sure it corrects itself
-        double D = 0.0;
-        double F = 0.0;//172; // to tune set long distance and set f to a value that causes osculation then lower it until it doesn't osculate
-        MiniPID miniPID;
-        miniPID = new MiniPID(P, I, D, F);
-        miniPID.setOutputLimits(0.5);
-        double actual = 0;
-        double output = 0;
+    /*public void grabberDump (boolean up, boolean down, double pwr) {
 
-        dumpWinch1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        dumpWinch2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        dumpWinch1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         dumpWinch2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        dumpWinch1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        dumpWinch2.setPower(pwr);
+        dumpWinch1.setPower(pwr);
 
         if (up) {
-            pos += 20;
+            winchPos += 20;
         } else if (down) {
-            pos -= 20;
+            winchPos -= 20;
         }
 
-        dumpWinch1.setTargetPosition(pos);
-        dumpWinch2.setTargetPosition(pos);
+        dumpWinch1.setTargetPosition(winchPos);
+        dumpWinch2.setTargetPosition(winchPos);
 
-        while (motorRearRight.isBusy()){
-
-            output = miniPID.getOutput(actual, rotationRate);
-            actual = (motorRearLeft.getCurrentPosition() - pos);
-
-            if (dumpWinch1.getCurrentPosition() > pos) {
-                motorPower = pwr - output;
-            } else if (dumpWinch1.getCurrentPosition() < pos + 10) {
-                motorPower = pwr + output;
-            } else {
-                motorPower = 1;
-            }
-
-            dumpWinch1.setPower(motorPower);
-            dumpWinch2.setPower(motorPower);
-
-        }
-
-    }*/
+    }//*/
 
     //move the grabber up and down to collect minerals or dump them out
     public void grabberDump(boolean up, boolean down, double speed){
@@ -809,7 +683,7 @@ public class Robot {
         } else {
             grabberDump.setPower(0);
         }
-    }
+    }//*/
 
     //uses bool inputs to turn the motors on and off forward and reverse to intake minerals
     public void intake(boolean in, boolean out){
@@ -862,13 +736,6 @@ public class Robot {
         } else if (off) {
             pin.setPosition(1);
         }
-
-        sleep(5000);
-
-        roverLatch(false);
-
-        //servoLock(false, true);
-
     }
 
     public void autoDump(){
@@ -913,67 +780,6 @@ public class Robot {
 
         return rawRange;
     }
-
-    /*public char sample() {
-        char gold = ' ';
-        boolean goldFound = true;
-
-        initVuforia();
-
-        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
-        } else {
-            gold = 's';
-
-        }
-
-            //Activate Tensor Flow Object Detection.
-            if (tfod != null) {
-                tfod.activate();
-            }
-
-            while (goldFound) {
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
-                        if (updatedRecognitions.size() == 3) {
-                            int goldMineralX = -1;
-                            int silverMineral1X = -1;
-                            int silverMineral2X = -1;
-                            for (Recognition recognition : updatedRecognitions) {
-                                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                                    goldMineralX = (int) recognition.getLeft();
-                                } else if (silverMineral1X == -1) {
-                                    silverMineral1X = (int) recognition.getLeft();
-                                } else {
-                                    silverMineral2X = (int) recognition.getLeft();
-                                }
-                            }
-                            if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                                if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                                    gold = 'l';
-                                    goldFound = false;
-                                } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
-                                    gold = 'r';
-                                    goldFound = false;
-                                } else {
-                                    gold = 'c';
-                                    goldFound = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-        if (tfod != null) {
-            tfod.shutdown();
-        }
-
-        return gold;
-    }//*/
 
     private void initVuforia() {
         /*
@@ -1020,14 +826,12 @@ public class Robot {
             long startTime = System.currentTimeMillis();
             long currentTime = startTime;
             while (currentTime - startTime < timeout) {
-                //telemetry.addData("time", currentTime - startTime);
-                //telemetry.update();
+
                 if (tfod != null) {
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
 
                     if (updatedRecognitions != null) {
-                        //telemetry.addData("# Object Detected", updatedRecognitions.size());
-                        //telemetry.update();
+
                         if (updatedRecognitions.size() == 2) {
                             int goldMineralX = -1;
                             int silverMineral1X = -1;
@@ -1049,10 +853,7 @@ public class Robot {
                             // is not visible, and must be on the right
 
                             if (goldMineralX == -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-                                //telemetry.addData("Gold Mineral Position", "Right");
                                 Pos = 'r';
-                                //telemetry.addData("Position", Position);
-                                //telemetry.update();
                             }
 
                             // If you can see one gold and one silver ...
@@ -1061,37 +862,19 @@ public class Robot {
                                 // ... if the gold is to the right of the silver, the gold is in the center ...
 
 
-                                if (goldMineralX > silverMineral1X) {
-                                    //telemetry.addData("Gold Mineral Position", "Center");
+                                if (goldMineralX < silverMineral1X && goldMineralX > silverMineral2X) { //originally was > idk why it is dumb lol
                                     Pos = 'c';
-                                    //telemetry.addData("Position", Position);
-                                    //telemetry.update();
                                 }
-
-                                // ... otherwise it is on the left
-
                                 else {
-                                    //telemetry.addData("Gold Mineral Position", "Left");
                                     Pos = 'l';
-                                    //telemetry.addData("Position", Position);
-                                    //telemetry.update();
                                 }
                             }
-
-                            // ... otherwise it is on the left
-
                         }
                     }
                 }
-                //telemetry.update();
 
                 currentTime = System.currentTimeMillis();
-            }//*/
-
-            //telemetry.addData("Pos", Position);
-            //telemetry.update();
-
-            //sleep(5000);
+            }
 
         }
         return Pos;

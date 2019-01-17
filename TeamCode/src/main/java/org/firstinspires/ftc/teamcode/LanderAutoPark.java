@@ -17,31 +17,32 @@ boolean toggle = false;
 public void runOpMode() {
 
     //set the hardware map
-    robot = new Robot(hardwareMap);
+    robot = new Robot(this);
     robot.init();
 
-    char gold = 'r';
-    //char gold = robot.sample(3000);
+    //char gold = 'r';
 
     waitForStart();
 
     robot.autoDrop();
 
+    char gold = robot.sample(2000);
+
     switch (gold) {
 
         case 'l':
-            telemetry.addData("LEFT", "");
-            telemetry.update();
-
-            left();
-
-            break;
-
-        case 'c':
             telemetry.addData("CENTER", "");
             telemetry.update();
 
             center();
+
+            break;
+
+        case 'c':
+            telemetry.addData("LEFT", "");
+            telemetry.update();
+
+            left();
 
             break;
 
@@ -69,6 +70,8 @@ public void runOpMode() {
 
             break;
     }
+
+    telemetry.addData("Pos", gold);
 
     telemetry.addData("Done", "");
     telemetry.update();
@@ -116,7 +119,7 @@ public void runOpMode() {
         robot.autoDump();
 
         //drive to crater
-        robot.driveDistance(63);
+        //robot.driveDistance(63);
 
     }
 
@@ -144,7 +147,7 @@ public void runOpMode() {
         robot.autoDump();
 
         //drive to crater
-        robot.driveDistance(65);
+        //robot.driveDistance(65);
 
     }
 
@@ -157,7 +160,7 @@ public void runOpMode() {
         robot.driveTurn(-45, true);
 
         //hit block
-        robot.driveDistance(30);
+        robot.driveDistance(15);
 
         //face crater
         robot.driveTurn(-90, true);
@@ -169,7 +172,7 @@ public void runOpMode() {
         robot.autoDump();
 
         //floor it
-        robot.driveDistance(60);
+        //robot.driveDistance(75);
 
     }
 

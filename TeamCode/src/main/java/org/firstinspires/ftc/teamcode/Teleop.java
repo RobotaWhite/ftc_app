@@ -35,6 +35,9 @@ public void loop() {
         //grabber dump
         robot.grabberDump(gamepad1.dpad_up, gamepad1.dpad_down, 1.00);
 
+        //pin actuation
+        robot.servoPin(gamepad2.dpad_up, gamepad2.dpad_down);
+
 //DRIVER TWO <o/
         //control back slides
         robot.dumpWinch(gamepad2.right_bumper, gamepad2.left_bumper);
@@ -54,7 +57,7 @@ public void loop() {
 
         }*/
 
-        //telemetry.addData("Left", robot.left());
+        telemetry.addData("Left", robot.left());
         //telemetry.addData("Right", robot.right());
         //telemetry.addData("Sample", robot.sample());
         //telemetry.addData("Range", robot.range());
