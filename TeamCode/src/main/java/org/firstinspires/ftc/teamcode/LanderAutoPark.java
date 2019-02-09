@@ -31,18 +31,18 @@ public void runOpMode() {
     switch (gold) {
 
         case 'l':
-            telemetry.addData("CENTER", "");
-            telemetry.update();
-
-            center();
-
-            break;
-
-        case 'c':
             telemetry.addData("LEFT", "");
             telemetry.update();
 
             left();
+
+            break;
+
+        case 'c':
+            telemetry.addData("CENTER", "");
+            telemetry.update();
+
+            center();
 
             break;
 
@@ -82,22 +82,22 @@ public void runOpMode() {
     public void skip () {
 
         //drive forward 15 inches
-        robot.driveDistance(15);
+        robot.driveDistance(12);
 
         //turn to the left 90 degrees
         robot.driveTurn(90, true);
 
         //drive around minerals
-        robot.driveDistance(30);
+        robot.driveDistance(25);
 
         //turn to wall
-        robot.driveTurn(-40, true);
+        robot.driveTurn(-45, true);
 
         //drive to wall
         robot.driveRange(9);
 
         //turn to back
-        robot.driveTurn(90, true);
+        robot.driveTurn(80, true);
 
         //back into the parking spot
         robot.driveDistance(-30);
@@ -110,7 +110,7 @@ public void runOpMode() {
     public void center () {
 
         //drive forward to knock off the block
-        robot.driveDistance(63);
+        robot.driveDistance(43);
 
         //turn 180
         robot.driveTurn(225, true);
@@ -119,26 +119,26 @@ public void runOpMode() {
         robot.autoDump();
 
         //drive to crater
-        //robot.driveDistance(63);
+        robot.driveDistance(55);
 
     }
 
     public void left () {
 
         //drive forward
-        robot.driveDistance(15);
+        robot.driveDistance(10);
 
         //turn to the block
         robot.driveTurn(45, true);
 
         //hit block
-        robot.driveDistance(30);
+        robot.driveDistance(17);
 
         //turn back to the depot
-        robot.driveTurn(90, true);
+        robot.driveTurn(75, true);
 
         //back up to the depot
-        robot.driveDistance(-35);
+        robot.driveDistance(-27);
 
         //turn to face crater
         robot.driveTurn(90, true);
@@ -147,32 +147,32 @@ public void runOpMode() {
         robot.autoDump();
 
         //drive to crater
-        //robot.driveDistance(65);
+        robot.driveDistance(50);
 
     }
 
     public void right () {
 
         //drive forward
-        robot.driveDistance(15);
+        robot.driveDistance(10);
 
         //turn to gold
         robot.driveTurn(-45, true);
 
         //hit block
-        robot.driveDistance(15);
+        robot.driveDistance(22);
 
         //face crater
-        robot.driveTurn(-90, true);
+        robot.driveTurn(-85, true);
 
         //back up to depot
-        robot.driveDistance(-30);
+        robot.driveDistance(-10);
 
         //dump marker
         robot.autoDump();
 
         //floor it
-        //robot.driveDistance(75);
+        robot.driveDistance(40);
 
     }
 

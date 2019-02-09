@@ -35,12 +35,10 @@ public void loop() {
         //grabber dump
         robot.grabberDump(gamepad1.dpad_up, gamepad1.dpad_down, 1.00);
 
-        //pin actuation
-        robot.servoPin(gamepad2.dpad_up, gamepad2.dpad_down);
 
 //DRIVER TWO <o/
         //control back slides
-        robot.dumpWinch(gamepad2.right_bumper, gamepad2.left_bumper);
+        robot.dumpWinch(gamepad2.right_bumper, gamepad2.left_bumper, 1, gamepad2.start);
 
         //control latch
         robot.roverLatch(gamepad2.x);
@@ -58,13 +56,16 @@ public void loop() {
         }*/
 
         telemetry.addData("Left", robot.left());
-        //telemetry.addData("Right", robot.right());
+        telemetry.addData("Right", robot.right());
+        telemetry.addData("Winch ", robot.winchTele());
+        telemetry.addData("Winch 1: ", robot.winch1Pos());
+        telemetry.addData("Winch 2", robot.winch2Pos());
         //telemetry.addData("Sample", robot.sample());
         //telemetry.addData("Range", robot.range());
         //telemetry.addData("X", robot.gyro.getPosition().x);
         //telemetry.addData("Y", robot.gyro.getPosition().y);
         //telemetry.addData("Z", robot.gyro.getPosition().z);
-        //telemetry.update();
+        telemetry.update();
 
     }
 }

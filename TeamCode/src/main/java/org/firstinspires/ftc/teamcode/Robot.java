@@ -6,8 +6,10 @@ import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.Range;
@@ -72,8 +74,8 @@ public class Robot {
     //motors
     private DcMotor motorRearRight; //right motor
     private DcMotor motorRearLeft; //left motor
-    private DcMotor dumpWinch1; //winch to actuate the back dumper up and down
-    private DcMotor dumpWinch2; //adds strength to the back for climbing
+    private DcMotorEx dumpWinch1; //winch to actuate the back dumper up and down
+    private DcMotorEx dumpWinch2; //adds strength to the back for climbing
     private DcMotor grabberDump; //dumps the balls that are collected in the front
     private DcMotor grabber; //motor to collect balls
     private DcMotor grabberWinch; //motor to reach out with the grabber
@@ -87,6 +89,7 @@ public class Robot {
 
     toggle latcher = new toggle();
     toggle drivers = new toggle();
+    toggle winches = new toggle();
 
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
@@ -121,7 +124,7 @@ public class Robot {
 
     List<VuforiaTrackable> allTrackables = new ArrayList<>();
 
-    static final double COUNTS_PER_MOTOR_REV = 1120;    // eg: TETRIX Motor Encoder
+    static final double COUNTS_PER_MOTOR_REV = 560;//1120;    // eg: TETRIX Motor Encoder
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // This is < 1.0 if geared UP
     static final double WHEEL_DIAMETER_INCHES = 2.25;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -153,8 +156,8 @@ public class Robot {
             grabber = hardwareMap.dcMotor.get("grabber");
             grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
             grabberDump = hardwareMap.dcMotor.get("grabberDump");
-            dumpWinch1 = hardwareMap.dcMotor.get("dump_winch");
-            dumpWinch2 = hardwareMap.dcMotor.get("dump_winch2");
+            dumpWinch1 = hardwareMap.get(DcMotorEx.class, "dump_winch");
+            dumpWinch2 = hardwareMap.get(DcMotorEx.class, "dump_winch2");
             dumper = hardwareMap.dcMotor.get("dumper");
 
             latch = hardwareMap.servo.get("latch");
@@ -184,11 +187,42 @@ public class Robot {
         gyro.initialize(parameters);
 
         motorRearRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        /*umpWinch1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        dumpWinch1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         dumpWinch2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        dumpWinch1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        dumpWinch2.setMode(DcMotor.RunMode.RUN_TO_POSITION);*/
+        dumpWinch2.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        PIDFCoefficients pid1 = dumpWinch1.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        pid1.i = 0;
+        pid1.p += 25;
+        pid1.d = 0;
+        pid1.f = 0;
+
+        PIDFCoefficients pid2 = dumpWinch2.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
+        pid2.i = 0;
+        pid2.p += 25;
+        pid2.d = 0;
+        pid2.f = 0;
+
+        dumpWinch1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid1);
+        dumpWinch2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid1);
+
+        dumpWinch1.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pid2);
+        dumpWinch2.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pid2);
+
+        boolean toggled = false;
+
+    }
+
+    public double winch1Pos () {
+
+        return dumpWinch1.getCurrentPosition();
+
+    }
+
+    public double winch2Pos () {
+
+        return dumpWinch2.getCurrentPosition();
 
     }
 
@@ -374,7 +408,7 @@ public class Robot {
     //drives straight for what ever distance needed in inches
     public void driveDistance(double distance) {
         //tune f then p then I
-        double power = 0.7;
+        double power = 0.6;
         double rotationRate = 0;
         double P = 0.0820; // going to be small bring this up until osculation occurs then back that number off
         double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
@@ -430,7 +464,7 @@ public class Robot {
     //drives straight until the range sensor is so far from the wall
     public void driveRange(double distance) {
         //tune f then p then I
-        double power = 0.9;
+        double power = 0.2;
         double rotationRate = 0;
         double P = 0.0820; // going to be small bring this up until osculation occurs then back that number off
         double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
@@ -517,7 +551,7 @@ public class Robot {
             resetAngle();
         }
         while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 5 && lop.opModeIsActive()) {
-            double limitedAngle = angleRamp.ratelimiter(angle, rate*5);// was divided by 100
+            double limitedAngle = angleRamp.ratelimiter(angle, rate*4);// was divided by 100
 
             output = miniPID.getOutput(actual, limitedAngle);
             actual = (getAngle()/*gyro.getIntegratedZValue()*/);
@@ -633,29 +667,26 @@ public class Robot {
     }
 
     // actuate the back slides up to reach up to the rover to dump the minerals
-    public void dumpWinch(boolean up, boolean down){
+    public void dumpWinchStrong(boolean up, boolean down, double pwr){
+
+        dumpWinch2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        dumpWinch1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         if (up){
-            dumpWinch1.setPower(1);
-            dumpWinch2.setPower(1);
-
-            servoPin(true, false);
+            dumpWinch1.setPower(pwr);
+            dumpWinch2.setPower(pwr);
         } else if (down){
-            dumpWinch1.setPower(-1);
-            dumpWinch2.setPower(-1);
-
-            servoPin(true, false);
+            dumpWinch1.setPower(-pwr);
+            dumpWinch2.setPower(-pwr);
         } else {
             dumpWinch1.setPower(0);
             dumpWinch2.setPower(0);
-
-            servoPin(false, true);
         }
 
 
     }//*/
 
-    /*public void grabberDump (boolean up, boolean down, double pwr) {
+    public void dumpWinchHold (boolean up, boolean down, double pwr) {
 
         dumpWinch2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         dumpWinch1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -663,16 +694,28 @@ public class Robot {
         dumpWinch2.setPower(pwr);
         dumpWinch1.setPower(pwr);
 
-        if (up) {
+        /*if (up) {
             winchPos += 20;
         } else if (down) {
             winchPos -= 20;
-        }
+        }*/
+
+        winchPos = 420;
 
         dumpWinch1.setTargetPosition(winchPos);
         dumpWinch2.setTargetPosition(winchPos);
 
     }//*/
+
+    public void dumpWinch (boolean up, boolean down, double pwr, boolean input) {
+
+        if (winches.value(input)) {
+            dumpWinchHold(up, down, pwr);
+        } else {
+            dumpWinchStrong(up, down, pwr);
+        }
+
+    }
 
     //move the grabber up and down to collect minerals or dump them out
     public void grabberDump(boolean up, boolean down, double speed){
@@ -684,6 +727,12 @@ public class Robot {
             grabberDump.setPower(0);
         }
     }//*/
+
+    public double winchTele () {
+
+        return winchPos;
+
+    }
 
     //uses bool inputs to turn the motors on and off forward and reverse to intake minerals
     public void intake(boolean in, boolean out){
@@ -700,9 +749,9 @@ public class Robot {
     //actuate the front grabber assembly in and out to grab minerals without going inside the crater
     public void grabberWinch (boolean out, boolean in){
         if (out){
-            grabberWinch.setPower(0.5);
+            grabberWinch.setPower(0.7);
         } else if (in){
-            grabberWinch.setPower(-0.5);
+            grabberWinch.setPower(-0.7);
         } else {
             grabberWinch.setPower(0);
         }
@@ -744,10 +793,10 @@ public class Robot {
 
         sleep(1400);
 
-        roverDump(false, false);
         grabberDump(true, false, 0.8);
 
         sleep(800);
+        roverDump(false, false);
         grabberDump(false, false, 0.0);
 
     }
