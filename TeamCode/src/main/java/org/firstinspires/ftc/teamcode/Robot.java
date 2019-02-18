@@ -1,5 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
+/**
+ *
+ * 2018 - 2019 FTC season Robota White #8749 hardware map
+ * Do what you want with our code, if you have any questions
+ * you can email our programmer at 19stwa_h@union.k12.ia.us with any questions
+ *
+ */
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
@@ -11,7 +19,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -39,7 +46,6 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGR
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
 public class Robot {
@@ -64,9 +70,6 @@ public class Robot {
     public HardwareMap hardwareMap;
     public ModernRoboticsI2cRangeSensor rangeSensor;
     public ColorSensor colorSensor;
-    //public ModernRoboticsI2cGyro gyro;
-    //public Motors leftMotors;
-    //public Motors rightMotors;
 
     //set these inaccessible from outside to force using an interface
     private LinearOpMode lop;
@@ -111,7 +114,9 @@ public class Robot {
     VuforiaTrackables relicTrackables;
     VuforiaTrackable relicTemplate;
 
-    //"ARrdAAv/////AAAAmW9uze+2tUpOrVymH8EdMU4uGNoIh0dtDy1ZLrUB53M5NpXJ1PMdsAe+3M3/pNqcg9nOrY6KjImV1kxpfomVVraihhTTR6s60pnBfop1LAPtHuDFWTtUVJoT68oD4/pX/jbPhWDCAsk3dDsphHIUz8K53ATDNHXLg1bsljuKjm7RDxjgA0ivV/dVLzhM9vZ0w5DBcApqrl585MOtlCQcLbIkkMcdxUYdKGDHEFK/38z+tnuDMQ6PbA7YnhOCtoxJtYhn2fNimkvExG9mNnXTASTVge0w3vHQ7miA3yq1s8U6u2rUyby/6MaPZEFlOta31e87/sp4z+rZQndy5y9hrt1EjGn0YVKZbll5Uect3WU7";
+    /**
+     * Set the icky global variables
+     */
 
     private static final float mmPerInch        = 25.4f;
     private static final float mmFTCFieldWidth  = (12*6) * mmPerInch;       // the width of the FTC field (from the center point to the outer panels)
@@ -151,29 +156,26 @@ public class Robot {
 
     public void init() {
 
-            motorRearRight = hardwareMap.dcMotor.get("right_drive");
-            motorRearLeft = hardwareMap.dcMotor.get("left_drive");
-            grabber = hardwareMap.dcMotor.get("grabber");
-            grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
-            grabberDump = hardwareMap.dcMotor.get("grabberDump");
-            dumpWinch1 = hardwareMap.get(DcMotorEx.class, "dump_winch");
-            dumpWinch2 = hardwareMap.get(DcMotorEx.class, "dump_winch2");
-            dumper = hardwareMap.dcMotor.get("dumper");
+        //set up the motor assignments
+        motorRearRight = hardwareMap.dcMotor.get("right_drive");
+        motorRearLeft = hardwareMap.dcMotor.get("left_drive");
+        grabber = hardwareMap.dcMotor.get("grabber");
+        grabberWinch = hardwareMap.dcMotor.get("grabber_winch");
+        grabberDump = hardwareMap.dcMotor.get("grabberDump");
+        dumpWinch1 = hardwareMap.get(DcMotorEx.class, "dump_winch");
+        dumpWinch2 = hardwareMap.get(DcMotorEx.class, "dump_winch2");
+        dumper = hardwareMap.dcMotor.get("dumper");
 
-            latch = hardwareMap.servo.get("latch");
-            pin = hardwareMap.servo.get("pin");
+        //set up the servo assignments
+        latch = hardwareMap.servo.get("latch");
+        pin = hardwareMap.servo.get("pin");
 
-            rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "range");
+        //set up the sensor assignments
+        rangeSensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "range");
 
-            gyro = hardwareMap.get(BNO055IMU.class, "imu");
+        gyro = hardwareMap.get(BNO055IMU.class, "imu");
 
-        //colorSensor = hardwareMap.get(ColorSensor.class, "sensor_color");
-        //colorSensor.enableLed(true);
-        //gyro = (ModernRoboticsI2cGyro) hardwareMap.gyroSensor.get("gyro");
-
-        // Set up the parameters with which we will use our IMU. Note that integration
-        // algorithm here just reports accelerations to the logcat log; it doesn't actually
-        // provide positional information.
+        // Set up the parameters with which we will use our IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
@@ -210,63 +212,23 @@ public class Robot {
         dumpWinch1.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pid2);
         dumpWinch2.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, pid2);
 
-        boolean toggled = false;
-
     }
 
+    //returns the first winch position for debugging
     public double winch1Pos () {
 
         return dumpWinch1.getCurrentPosition();
 
     }
 
+    //returns the second winch motor position for debugging
     public double winch2Pos () {
 
         return dumpWinch2.getCurrentPosition();
 
     }
 
-    /*/**
-     * Initialize the Vuforia localization engine.
-     *
-    private void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         *
-        try {
-            VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-            parameters.vuforiaLicenseKey = VUFORIA_KEY;
-            parameters.cameraName = hardwareMap.get(WebcamName.class, "camera");
-
-            //  Instantiate the Vuforia engine
-            vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-            // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
-        }
-
-        catch (Exception g){
-
-        }
-    }
-
-    /**
-     * Initialize the Tensor Flow Object Detection engine.
-     *
-    private void initTfod() {
-        try {
-            int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                    "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-            TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-            tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-            tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
-        }
-        catch (Exception t){
-
-        }
-    }*/
-
-
+    //initilizes the camera for use with the vuforia engine
     public void cameraInit(){
 
 
@@ -303,11 +265,11 @@ public class Robot {
             //List<VuforiaTrackable> allTrackables = new ArrayList<>();
             allTrackables.addAll(targetsRoverRuckus);
 
-            //---------------
-            //locations
-            //---------------
+        /**
+         * Locations
+         */
 
-            //blue rover
+        //blue rover
             OpenGLMatrix blueRoverLocationOnField = OpenGLMatrix
                     .translation(0, mmFTCFieldWidth, mmTargetHeight)
                     .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0));
@@ -353,29 +315,6 @@ public class Robot {
         //activate the trackables
         targetsRoverRuckus.activate();
 
-        /*this.vuforia = ClassFactory.createVuforiaLocalizer(parametersCamera);
-
-        relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
-        relicTemplate = relicTrackables.get(0);
-
-        relicTrackables.activate();*/
-
-        //group and set up the left motors
-        /*leftMotors = new Motors(motorFrontLeft, motorRearLeft);
-        leftMotors.setDirection(DcMotor.Direction.REVERSE);
-        leftMotors.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftMotors.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        //group and set up the right motors
-        rightMotors = new Motors(motorFrontRight, motorRearRight);
-        rightMotors.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightMotors.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motor_grab.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motor_grab.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-*/
-        // make sure the gyro is calibrated before continuing
-        //gyro.calibrate();
-
     }
     //gyro tank mode(not used)
     public void GyroTank(double leftStick, double rightStick, int level, boolean precision) {
@@ -406,9 +345,9 @@ public class Robot {
 
     }
     //drives straight for what ever distance needed in inches
-    public void driveDistance(double distance) {
+    public void driveDistance(double distance, double power) {
         //tune f then p then I
-        double power = 0.6;
+        //double power = 0.6;
         double rotationRate = 0;
         double P = 0.0820; // going to be small bring this up until osculation occurs then back that number off
         double I = 0.00001; // tie string to one side to apply resistance and make sure it corrects itself
@@ -485,7 +424,7 @@ public class Robot {
 
         while (rangeSensor.rawUltrasonic() > distance && lop.opModeIsActive()) {
             output = miniPID.getOutput(actual, rotationRate);
-            actual = (/*gyro.getIntegratedZValue()*/ getAngle());
+            actual = (getAngle());
 
             double leftPower;
             double rightPower;
@@ -508,6 +447,7 @@ public class Robot {
         motorRearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorRearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        //if there is a problem at the end try turning to zero
         //driveTurn(0, false);
         sleep(500);
     }
@@ -551,7 +491,7 @@ public class Robot {
             resetAngle();
         }
         while (Math.abs(angle - getAngle()/*gyro.getIntegratedZValue()*/) > 5 && lop.opModeIsActive()) {
-            double limitedAngle = angleRamp.ratelimiter(angle, rate*4);// was divided by 100
+            double limitedAngle = angleRamp.ratelimiter(angle, rate*300);// was divided by 100
 
             output = miniPID.getOutput(actual, limitedAngle);
             actual = (getAngle()/*gyro.getIntegratedZValue()*/);
@@ -629,6 +569,11 @@ public class Robot {
 
     }
 
+
+    /**
+     * TeleOp functions
+     */
+
     //drive time
     public void driveTime(int time, double pwr){
 
@@ -658,6 +603,7 @@ public class Robot {
         motorRearRight.setPower(conditionStick(rightStick));
     }
 
+    //toggles the current driver
     public void driverToggle(boolean input, double left1, double right1, double left2, double right2){
         if (drivers.value(input)){
             driveTank(left2, right2, 8, false);
@@ -667,7 +613,7 @@ public class Robot {
     }
 
     // actuate the back slides up to reach up to the rover to dump the minerals
-    public void dumpWinchStrong(boolean up, boolean down, double pwr){
+    private void dumpWinchStrong(boolean up, boolean down, double pwr){
 
         dumpWinch2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         dumpWinch1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -684,9 +630,10 @@ public class Robot {
         }
 
 
-    }//*/
+    }
 
-    public void dumpWinchHold (boolean up, boolean down, double pwr) {
+    //weaker hold winch up to position method
+    private void dumpWinchHold (boolean up, boolean down, double pwr) {
 
         dumpWinch2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         dumpWinch1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -705,8 +652,9 @@ public class Robot {
         dumpWinch1.setTargetPosition(winchPos);
         dumpWinch2.setTargetPosition(winchPos);
 
-    }//*/
+    }
 
+    //all winch function to toggle betwwen the hold and strong functions
     public void dumpWinch (boolean up, boolean down, double pwr, boolean input) {
 
         if (winches.value(input)) {
@@ -726,8 +674,9 @@ public class Robot {
         } else {
             grabberDump.setPower(0);
         }
-    }//*/
+    }
 
+    //returns the current winch pos for debug
     public double winchTele () {
 
         return winchPos;
@@ -747,27 +696,28 @@ public class Robot {
     }
 
     //actuate the front grabber assembly in and out to grab minerals without going inside the crater
-    public void grabberWinch (boolean out, boolean in){
+    public void grabberWinch (boolean out, boolean in, double pwr){
         if (out){
-            grabberWinch.setPower(0.7);
+            grabberWinch.setPower(pwr);
         } else if (in){
-            grabberWinch.setPower(-0.7);
+            grabberWinch.setPower(-pwr);
         } else {
             grabberWinch.setPower(0);
         }
     }
 
     //dumps the minerals into the rover
-    public void roverDump (boolean dump, boolean in){
+    public void roverDump (boolean dump, boolean in, double upPwr, double downPwr){
         if (in){
-            dumper.setPower(0.5);
+            dumper.setPower(upPwr);
         } else if (dump){
-            dumper.setPower(-0.6);
+            dumper.setPower(downPwr);
         } else {
             dumper.setPower(0);
         }
     }
 
+    //actuare the back fingers also used in auto
     public void roverLatch(boolean input){
 
         if (latcher.value(input)){
@@ -778,6 +728,26 @@ public class Robot {
 
     }
 
+    //zeros the encoders on the lift to recalibrate them for endgame
+    public void zero(boolean zeroBtn) {
+
+        if (zeroBtn) {
+
+            dumpWinch1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            dumpWinch2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        }
+
+    }
+
+
+
+
+    /**
+     * Autonomus functions
+     */
+
+    //actuate the lock pin for the slides
     public void servoPin(boolean on, boolean off){
 
         if (on) {
@@ -787,20 +757,22 @@ public class Robot {
         }
     }
 
+    // dump by time to release the marker
     public void autoDump(){
-        roverDump(true, false);
-        grabberDump(false, true, 0.5);
+        roverDump(true, false, 1.0, -1.0);
+        grabberDump(false, true, 1.0);
 
-        sleep(1400);
+        sleep(2000);
 
-        grabberDump(true, false, 0.8);
+        /*grabberDump(true, false, 0.8);
 
-        sleep(800);
-        roverDump(false, false);
+        sleep(800);*/
+        roverDump(false, false, 1.0, -1.0);
         grabberDump(false, false, 0.0);
 
     }
 
+    // auto function to drop the robot from the lander by time
     public void autoDrop(){
 
         //roverLatch(true);
@@ -813,6 +785,7 @@ public class Robot {
         sleep(800);
     }
 
+    // allows us to use sleep in our robot hardware map
     public final void sleep(long milliseconds) {
         try {
             Thread.sleep(milliseconds);
@@ -821,6 +794,7 @@ public class Robot {
         }
     }
 
+    // return the raw ultra sonic range from the sensor
     public double range(){
 
         double rawRange;
@@ -830,6 +804,7 @@ public class Robot {
         return rawRange;
     }
 
+    //two ball detection loop
     private void initVuforia() {
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.

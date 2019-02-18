@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 @Autonomous(name="Crater", group="Auto")
 
-public class LanderAutoCrater extends LinearOpMode {
+public class LanderAutoCraterClaim extends LinearOpMode {
 Robot robot;
 boolean toggle = false;
 
@@ -107,7 +107,7 @@ public void runOpMode() {
         robot.driveDistance(10, 0.6);
 
         //turn to the block
-        robot.driveTurn(-45, true);
+        robot.driveTurn(45, true);
 
         //hit block
         robot.driveDistance(25, 0.6);
@@ -120,7 +120,7 @@ public void runOpMode() {
         robot.driveDistance(10, 0.6);
 
         //turn to gold
-        robot.driveTurn(45, true);
+        robot.driveTurn(-45, true);
 
         //hit block
         robot.driveDistance(25, 0.6);
